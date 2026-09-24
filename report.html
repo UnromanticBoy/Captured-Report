@@ -2,1163 +2,914 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<title>Report Login</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSPIRA Report</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f4f6f9;
+        color: #222;
+    }
+    button, input, select { font: inherit; }
+    .hidden { display: none !important; }
 
-* {
-    box-sizing: border-box;
-}
+    /* Login */
+    .login-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #eef4ff, #f8fafc);
+    }
+    .login-card {
+        width: 100%;
+        max-width: 420px;
+        background: #fff;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 12px 35px rgba(0,0,0,.10);
+    }
+    .login-card h1 { margin: 0 0 8px; }
+    .login-card p { color: #666; margin: 0 0 22px; }
+    .field { margin-bottom: 15px; }
+    .field label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+    .field input, .field select {
+        width: 100%;
+        padding: 11px 12px;
+        border: 1px solid #ccd3dc;
+        border-radius: 8px;
+        outline: none;
+        background: #fff;
+    }
+    .field input:focus, .field select:focus {
+        border-color: #4f7cff;
+        box-shadow: 0 0 0 3px rgba(79,124,255,.12);
+    }
 
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f4f6f8;
-}
+    .btn {
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 15px;
+        cursor: pointer;
+        font-weight: 700;
+    }
+    .btn-primary { background: #1769e0; color: #fff; }
+    .btn-primary:hover { background: #1259bf; }
+    .btn-secondary { background: #e9edf3; color: #222; }
+    .btn-danger { background: #d92d20; color: #fff; }
+    .btn-danger:hover { background: #b42318; }
+    .btn-small { padding: 7px 10px; font-size: 12px; }
 
-.hidden {
-    display: none !important;
-}
+    .message {
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+    }
+    .message.error { background: #fff0f0; color: #b42318; }
+    .message.success { background: #ecfdf3; color: #027a48; }
+    .message.info { background: #eff8ff; color: #175cd3; }
 
-/* LOGIN */
+    /* App */
+    .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: #fff;
+        border-bottom: 1px solid #e2e7ee;
+        padding: 13px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+    }
+    .topbar-title { font-size: 21px; font-weight: 800; }
+    .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+    }
 
-.login-container {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+    .container {
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 20px;
+    }
 
-.login-box {
-    width: 380px;
-    background: white;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.12);
-}
+    .kpis {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0,1fr));
+        gap: 15px;
+        margin-bottom: 18px;
+    }
+    .kpi {
+        background: #fff;
+        border: 1px solid #e3e8ef;
+        border-radius: 13px;
+        padding: 18px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.04);
+    }
+    .kpi-label { color: #667085; font-size: 13px; font-weight: 700; }
+    .kpi-value { font-size: 30px; font-weight: 800; margin-top: 6px; }
 
-.login-box h2 {
-    text-align: center;
-    margin-bottom: 25px;
-}
+    .card {
+        background: #fff;
+        border: 1px solid #e3e8ef;
+        border-radius: 13px;
+        padding: 18px;
+        margin-bottom: 18px;
+        box-shadow: 0 4px 14px rgba(0,0,0,.04);
+    }
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    .card-header h2 { margin: 0; font-size: 18px; }
 
-input,
-select {
-    width: 100%;
-    padding: 12px;
-    margin-top: 7px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 15px;
-}
+    .filters {
+        display: grid;
+        grid-template-columns: 1.3fr .8fr .8fr auto;
+        gap: 10px;
+        align-items: end;
+    }
+    .filters input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccd3dc;
+        border-radius: 8px;
+    }
 
-button {
-    border: none;
-    padding: 11px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-}
+    .table-wrap {
+        overflow: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 9px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 980px;
+    }
+    th, td {
+        padding: 10px 11px;
+        border-bottom: 1px solid #edf0f4;
+        text-align: left;
+        vertical-align: middle;
+        font-size: 13px;
+    }
+    th {
+        background: #f8fafc;
+        font-weight: 800;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+    tr:hover td { background: #fbfcfe; }
+    .thumb {
+        width: 90px;
+        height: 70px;
+        object-fit: cover;
+        border-radius: 7px;
+        border: 1px solid #ddd;
+        cursor: pointer;
+        background: #f1f3f5;
+    }
+    .muted { color: #667085; }
+    .nowrap { white-space: nowrap; }
 
-.login-btn {
-    width: 100%;
-    background: #2563eb;
-    color: white;
-}
+    /* Admin */
+    .admin-panel {
+        border: 2px solid #f0b429;
+        background: #fffdf5;
+    }
+    .admin-toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .selection-summary {
+        font-size: 13px;
+        font-weight: 700;
+        color: #7a5a00;
+        margin-left: auto;
+    }
+    .delete-list {
+        max-height: 420px;
+        overflow: auto;
+        border: 1px solid #eadfb8;
+        border-radius: 8px;
+        background: #fff;
+    }
+    .delete-row {
+        display: grid;
+        grid-template-columns: 32px 80px 1fr 140px 170px;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 10px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 12px;
+    }
+    .delete-row:last-child { border-bottom: 0; }
+    .delete-row img {
+        width: 65px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    .danger-note {
+        background: #fff0f0;
+        border: 1px solid #fecdca;
+        color: #b42318;
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
 
-.login-btn:hover {
-    background: #1d4ed8;
-}
+    /* Modal */
+    .modal {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: rgba(0,0,0,.62);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .modal-box {
+        background: #fff;
+        width: min(900px, 100%);
+        max-height: 90vh;
+        overflow: auto;
+        border-radius: 12px;
+        padding: 15px;
+        position: relative;
+    }
+    .modal-box img {
+        display: block;
+        max-width: 100%;
+        max-height: 78vh;
+        margin: auto;
+    }
+    .modal-close {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        border: 0;
+        background: #fff;
+        font-size: 25px;
+        cursor: pointer;
+    }
 
-.forgot-btn {
-    width: 100%;
-    margin-top: 10px;
-    background: transparent;
-    color: #2563eb;
-}
-
-.message {
-    margin-top: 15px;
-    text-align: center;
-    font-size: 14px;
-}
-
-/* APP */
-
-#app {
-    min-height: 100vh;
-}
-
-.topbar {
-    background: #1e293b;
-    color: white;
-    padding: 15px 25px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.topbar button {
-    background: #ef4444;
-    color: white;
-}
-
-.container {
-    padding: 25px;
-}
-
-/* REPORT */
-
-.report-box {
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.06);
-}
-
-/* ADMIN */
-
-.admin-box {
-    margin-top: 25px;
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
-}
-
-.admin-box h2 {
-    margin-top: 0;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-th,
-td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: left;
-}
-
-th {
-    background: #f1f5f9;
-}
-
-.active {
-    color: green;
-    font-weight: bold;
-}
-
-.inactive {
-    color: red;
-    font-weight: bold;
-}
-
-.admin-actions button {
-    margin-right: 5px;
-}
-
-.btn-green {
-    background: #16a34a;
-    color: white;
-}
-
-.btn-red {
-    background: #dc2626;
-    color: white;
-}
-
-.btn-gray {
-    background: #64748b;
-    color: white;
-}
-
+    @media (max-width: 850px) {
+        .kpis { grid-template-columns: 1fr; }
+        .filters { grid-template-columns: 1fr; }
+        .selection-summary { margin-left: 0; width: 100%; }
+        .delete-row {
+            grid-template-columns: 32px 70px 1fr;
+        }
+        .delete-row > .optional-col { display: none; }
+        .topbar { align-items: flex-start; }
+        .topbar-right { flex-direction: column; align-items: flex-end; }
+    }
 </style>
 </head>
-
 <body>
 
-<!-- ================= LOGIN ================= -->
+<!-- LOGIN -->
+<div id="loginPage" class="login-page">
+    <div class="login-card">
+        <h1>NSPIRA REPORT</h1>
+        <p>Secure report access</p>
 
-<div id="loginPage" class="login-container">
-
-    <div class="login-box">
-
-        <h2>Captured Images Report</h2>
-
-        <label>Email</label>
-
-        <input
-            type="email"
-            id="loginEmail"
-            placeholder="Enter email">
-
-        <label>Password</label>
-
-        <input
-            type="password"
-            id="loginPassword"
-            placeholder="Enter password">
-
-        <button
-            class="login-btn"
-            onclick="login()">
-            Login
-        </button>
-
-        <button
-            class="forgot-btn"
-            onclick="showReset()">
-            Forgot Password?
-        </button>
-
-        <div
-            id="loginMessage"
-            class="message">
+        <div class="field">
+            <label>Email</label>
+            <input id="loginEmail" type="email" autocomplete="username" placeholder="Enter email">
         </div>
 
-    </div>
-
-</div>
-
-
-<!-- ================= RESET PASSWORD ================= -->
-
-<div id="resetPage" class="login-container hidden">
-
-    <div class="login-box">
-
-        <h2>Reset Password</h2>
-
-        <label>Email</label>
-
-        <input
-            type="email"
-            id="resetEmail"
-            placeholder="Enter registered email">
-
-        <button
-            class="login-btn"
-            onclick="sendReset()">
-            Send Reset Email
-        </button>
-
-        <button
-            class="forgot-btn"
-            onclick="showLogin()">
-            Back to Login
-        </button>
-
-        <div
-            id="resetMessage"
-            class="message">
+        <div class="field">
+            <label>Password</label>
+            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter password">
         </div>
 
-    </div>
+        <button class="btn btn-primary" style="width:100%" onclick="login()">Login</button>
 
+        <div id="loginMessage" class="hidden"></div>
+
+        <div style="margin-top:14px;text-align:center">
+            <button class="btn btn-secondary btn-small" onclick="showReset()">Forgot Password?</button>
+        </div>
+    </div>
 </div>
 
+<!-- RESET REQUEST -->
+<div id="resetPage" class="login-page hidden">
+    <div class="login-card">
+        <h1>Reset Password</h1>
+        <p>Enter your registered report email.</p>
 
-<!-- ================= APPLICATION ================= -->
+        <div class="field">
+            <label>Email</label>
+            <input id="resetEmail" type="email" placeholder="Enter email">
+        </div>
 
+        <button class="btn btn-primary" style="width:100%" onclick="sendReset()">Send Reset Email</button>
+
+        <div id="resetMessage" class="hidden"></div>
+
+        <div style="margin-top:14px;text-align:center">
+            <button class="btn btn-secondary btn-small" onclick="showLogin()">Back to Login</button>
+        </div>
+    </div>
+</div>
+
+<!-- APP -->
 <div id="app" class="hidden">
-
     <div class="topbar">
-
-        <div>
-            <strong>My Report</strong>
-        </div>
-
-        <div>
-
+        <div class="topbar-title">NSPIRA REPORT</div>
+        <div class="topbar-right">
             <span id="userEmail"></span>
-
-            <button onclick="logout()">
-                Logout
-            </button>
-
+            <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
         </div>
-
     </div>
 
+    <main class="container">
+        <section class="kpis">
+            <div class="kpi">
+                <div class="kpi-label">Total Photos</div>
+                <div id="totalPhotos" class="kpi-value">0</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Today</div>
+                <div id="todayPhotos" class="kpi-value">0</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Current NSP Count</div>
+                <div id="currentNsp" class="kpi-value">0</div>
+            </div>
+        </section>
 
-    <div class="container">
-
-        <!-- REPORT -->
-
-        <div class="report-box">
-
-            <h2>Report</h2>
-
-            <!-- =================================================
-                 PASTE YOUR EXISTING REPORT HTML HERE
-                 ================================================= -->
-
-            <div id="reportContent">
-
-                <h3>My Report</h3>
-
-                <p>
-                    Your existing report will be placed here.
-                </p>
-
+        <section class="card">
+            <div class="card-header">
+                <h2>Photo Report</h2>
+                <button class="btn btn-secondary btn-small" onclick="loadReport()">Refresh</button>
             </div>
 
-        </div>
-
-
-        <!-- ADMIN PANEL -->
-
-        <div
-            id="adminPanel"
-            class="admin-box hidden">
-
-            <h2>Admin Panel</h2>
-
-            <h3>Add New User</h3>
-
-            <input
-                type="email"
-                id="newEmail"
-                placeholder="Enter email address">
-
-            <select id="newRole">
-
-                <option value="report">
-                    Report Access
-                </option>
-
-                <option value="admin">
-                    Admin Access
-                </option>
-
-            </select>
-
-            <button
-                class="btn-green"
-                onclick="addUser()">
-                Add User
-            </button>
-
-            <div
-                id="adminMessage"
-                class="message">
+            <div class="filters">
+                <div>
+                    <label class="muted" style="font-size:12px;font-weight:700">Search</label>
+                    <input id="searchBox" placeholder="Search NSP, file name, address, batch..." oninput="renderReport()">
+                </div>
+                <div>
+                    <label class="muted" style="font-size:12px;font-weight:700">From Date</label>
+                    <input id="fromDate" type="date" onchange="renderReport()">
+                </div>
+                <div>
+                    <label class="muted" style="font-size:12px;font-weight:700">To Date</label>
+                    <input id="toDate" type="date" onchange="renderReport()">
+                </div>
+                <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
             </div>
 
+            <div id="reportMessage" class="hidden"></div>
 
-            <h3>Registered Users</h3>
+            <div class="table-wrap" style="margin-top:15px">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NSP</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Address</th>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th>Batch</th>
+                            <th>Image</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportTableBody"></tbody>
+                </table>
+            </div>
+        </section>
 
-            <table>
+        <!-- ADMIN ONLY -->
+        <section id="adminPanel" class="card admin-panel hidden">
+            <div class="card-header">
+                <div>
+                    <h2>Admin — NSP Reset / Delete Photos</h2>
+                    <div class="muted" style="font-size:12px;margin-top:4px">
+                        Select the files you want permanently deleted. Unchecked files will remain untouched.
+                    </div>
+                </div>
+                <div class="admin-toolbar">
+                    <button class="btn btn-secondary btn-small" onclick="selectAllForDelete()">Select All</button>
+                    <button class="btn btn-secondary btn-small" onclick="deselectAllForDelete()">Deselect All</button>
+                    <span id="selectionSummary" class="selection-summary">Selected: 0</span>
+                </div>
+            </div>
 
-                <thead>
+            <div class="danger-note">
+                <strong>Permanent deletion:</strong> selected database records and their corresponding files from the
+                private <strong>photo-stamping</strong> Storage bucket will be deleted. This cannot be undone.
+            </div>
 
-                    <tr>
+            <div id="adminMessage" class="hidden"></div>
 
-                        <th>Email</th>
+            <div class="delete-list" id="deleteList"></div>
 
-                        <th>Role</th>
-
-                        <th>Status</th>
-
-                        <th>Action</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="userTable">
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px">
+                <button class="btn btn-secondary" onclick="deselectAllForDelete()">Cancel Selection</button>
+                <button class="btn btn-danger" onclick="confirmDeleteSelected()">Delete Selected &amp; Reset NSP</button>
+            </div>
+        </section>
+    </main>
 </div>
 
+<!-- IMAGE MODAL -->
+<div id="imageModal" class="modal hidden" onclick="closeImageModal(event)">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeImageModal()">×</button>
+        <img id="modalImage" src="" alt="Photo">
+    </div>
+</div>
 
 <script>
+const SUPABASE_URL = "https://zgowfgfuaglpmoigfktx.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_fz31GlOgQRS9nhiCjN0XnA_0g4K7H_S";
 
-/* ==========================================================
-   STEP 1
-   PUT YOUR SUPABASE DETAILS HERE
-   ========================================================== */
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
 
-const SUPABASE_URL =
-    "https://zgowfgfuaglpmoigfktx.supabase.co";
+const REPORT_FUNCTION = "report-photos";
+const DELETE_FUNCTION = "admin-delete-photos";
 
-const SUPABASE_ANON_KEY =
-    "sb_publishable_fz31GlOgQRS9nhiCjN0XnA_0g4K7H_S";
+let reportRows = [];
+let deleteSelection = new Set();
+let inactivityTimer = null;
+let isAdmin = false;
 
-
-const supabaseClient =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-    );
-
-
-let currentUser = null;
-let currentProfile = null;
-
-
-/* ================= LOGIN ================= */
-
-async function login() {
-
-    const email =
-        document
-            .getElementById("loginEmail")
-            .value
-            .trim()
-            .toLowerCase();
-
-    const password =
-        document
-            .getElementById("loginPassword")
-            .value;
-
-    const message =
-        document.getElementById("loginMessage");
-
-    message.innerText = "";
-
-    if (!email || !password) {
-
-        message.innerText =
-            "Enter email and password.";
-
-        return;
-    }
-
-
-    /* ==========================================
-       CHECK WHETHER EMAIL IS ALLOWED
-       ========================================== */
-
-    const {
-        data: allowed,
-        error: allowedError
-    } =
-        await supabaseClient.rpc(
-            "is_report_email_allowed",
-            {
-                p_email: email
-            }
-        );
-
-
-    if (allowedError) {
-
-        message.innerText =
-            allowedError.message;
-
-        return;
-    }
-
-
-    if (!allowed) {
-
-        message.innerText =
-            "This email is not permitted to access the report.";
-
-        return;
-    }
-
-
-    /* ==========================================
-       LOGIN TO SUPABASE AUTH
-       ========================================== */
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient.auth
-            .signInWithPassword({
-                email: email,
-                password: password
-            });
-
-
-    if (error) {
-
-        message.innerText =
-            error.message;
-
-        return;
-    }
-
-
-    /* ==========================================
-       GET USER PROFILE / ROLE
-       ========================================== */
-
-    const {
-        data: accessUser,
-        error: profileError
-    } =
-        await supabaseClient
-            .from("report_users")
-            .select("*")
-            .eq("email", email)
-            .maybeSingle();
-
-
-    if (profileError || !accessUser) {
-
-        await supabaseClient.auth.signOut();
-
-        message.innerText =
-            "Unable to verify your report access.";
-
-        return;
-    }
-
-
-    if (!accessUser.active) {
-
-        await supabaseClient.auth.signOut();
-
-        message.innerText =
-            "This account is inactive.";
-
-        return;
-    }
-
-
-    currentUser = data.user;
-
-    currentProfile = accessUser;
-
-
-    /* ==========================================
-       OPEN APPLICATION
-       ========================================== */
-
-    openApplication();
-
+function setMessage(id, text, type = "info") {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = "message " + type;
+    el.textContent = text || "";
+    if (!text) el.classList.add("hidden");
 }
-
-/* ================= OPEN APPLICATION ================= */
-
-function openApplication() {
-
-    document
-        .getElementById("loginPage")
-        .classList.add("hidden");
-
-    document
-        .getElementById("resetPage")
-        .classList.add("hidden");
-
-    document
-        .getElementById("app")
-        .classList.remove("hidden");
-
-
-    document
-        .getElementById("userEmail")
-        .innerText =
-            currentUser.email;
-
-
-    /*
-       ONLY ADMIN SEES ADMIN PANEL
-    */
-
-    if (currentProfile.role === "admin") {
-
-        document
-            .getElementById("adminPanel")
-            .classList.remove("hidden");
-
-        loadUsers();
-
-    } else {
-
-        document
-            .getElementById("adminPanel")
-            .classList.add("hidden");
-
-    }
-
-}
-
-
-/* ================= LOGOUT ================= */
-
-async function logout() {
-
-    await supabaseClient.auth.signOut();
-
-    currentUser = null;
-    currentProfile = null;
-
-    document
-        .getElementById("app")
-        .classList.add("hidden");
-
-    document
-        .getElementById("loginPage")
-        .classList.remove("hidden");
-
-}
-
-
-/* ================= RESET PAGE ================= */
-
-function showReset() {
-
-    document
-        .getElementById("loginPage")
-        .classList.add("hidden");
-
-    document
-        .getElementById("resetPage")
-        .classList.remove("hidden");
-
-}
-
 
 function showLogin() {
-
-    document
-        .getElementById("resetPage")
-        .classList.add("hidden");
-
-    document
-        .getElementById("loginPage")
-        .classList.remove("hidden");
-
+    document.getElementById("resetPage").classList.add("hidden");
+    document.getElementById("loginPage").classList.remove("hidden");
+}
+function showReset() {
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("resetPage").classList.remove("hidden");
+    document.getElementById("resetMessage").classList.add("hidden");
 }
 
+async function login() {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
 
-/* ================= PASSWORD RESET ================= */
-
-async function sendReset() {
-
-    const email =
-        document.getElementById("resetEmail").value.trim();
-
-    const message =
-        document.getElementById("resetMessage");
-
-
-    if (!email) {
-
-        message.textContent =
-            "Please enter your email address.";
-
+    if (!email || !password) {
+        setMessage("loginMessage", "Please enter email and password.", "error");
         return;
     }
 
+    setMessage("loginMessage", "Signing in...", "info");
 
-    message.textContent =
-        "Checking email...";
-
-
-    // Check whether email is allowed
-
-    const {
-        data: allowed,
-        error: allowedError
-    } =
-        await supabaseClient.rpc(
-            "is_report_email_allowed",
-            {
-                p_email: email
-            }
-        );
-
-
-    if (allowedError) {
-
-        console.error(
-            "Access check error:",
-            allowedError
-        );
-
-        message.textContent =
-            "Unable to verify the email. Please try again.";
-
-        return;
-    }
-
-
-    if (!allowed) {
-
-        message.textContent =
-            "This email does not have active report access.";
-
-        return;
-    }
-
-
-    message.textContent =
-        "Sending password reset email...";
-
-
-    // Send reset email
-
-    const {
-        error
-    } =
-        await supabaseClient.auth.resetPasswordForEmail(
-            email,
-            {
-                redirectTo:
-                    window.location.origin +
-                    "/Captured-Report/reset-password.html"
-            }
-        );
-
-
-    if (error) {
-
-        console.error(error);
-
-        message.textContent =
-            error.message;
-
-        return;
-    }
-
-
-    message.textContent =
-        "Password reset email sent. Please check your email.";
-}
-/* ================= LOAD USERS ================= */
-
-async function loadUsers() {
-
-    const { data, error } =
-        await supabaseClient
-            .from("report_users")
-            .select("*")
-            .order("created_at", {
-                ascending: false
-            });
-
-
-    if (error) {
-
-        document.getElementById("adminMessage")
-            .innerText = error.message;
-
-        return;
-    }
-
-
-    const table =
-        document.getElementById("userTable");
-
-    table.innerHTML = "";
-
-
-    data.forEach(user => {
-
-        const row =
-            document.createElement("tr");
-
-
-        row.innerHTML = `
-
-            <td>${escapeHtml(user.email)}</td>
-
-            <td>${user.role}</td>
-
-            <td>
-
-                ${
-                    user.active
-
-                    ? '<span class="active">ACTIVE</span>'
-
-                    : '<span class="inactive">INACTIVE</span>'
-                }
-
-            </td>
-
-            <td class="admin-actions">
-
-                ${
-                    user.active
-
-                    ?
-
-                    `<button
-                        class="btn-gray"
-                        onclick="changeStatus('${user.id}', false)">
-                        Make Inactive
-                    </button>`
-
-                    :
-
-                    `<button
-                        class="btn-green"
-                        onclick="changeStatus('${user.id}', true)">
-                        Make Active
-                    </button>`
-                }
-
-                <button
-                    class="btn-red"
-                    onclick="deleteUser('${user.id}')">
-                    Delete
-                </button>
-
-            </td>
-        `;
-
-
-        table.appendChild(row);
-
+    const { error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
     });
 
+    if (error) {
+        setMessage("loginMessage", error.message, "error");
+        return;
+    }
+
+    await openApplication();
 }
 
+async function openApplication() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
 
-/* ================= ADD USER ================= */
+    if (!user) {
+        showLogin();
+        return;
+    }
 
-async function addUser() {
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("resetPage").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    document.getElementById("userEmail").textContent = user.email || "";
 
-  const email =
-    document.getElementById("newEmail").value.trim();
+    startInactivityTimer();
+    await loadReport();
+}
 
-  const role =
-    document.getElementById("newRole").value;
+async function logout() {
+    stopInactivityTimer();
+    await supabaseClient.auth.signOut();
+    document.getElementById("app").classList.add("hidden");
+    document.getElementById("adminPanel").classList.add("hidden");
+    showLogin();
+}
 
-  const message =
-    document.getElementById("adminMessage");
+function startInactivityTimer() {
+    stopInactivityTimer();
+    inactivityTimer = setTimeout(async () => {
+        alert("You have been logged out due to 5 minutes of inactivity.");
+        await logout();
+    }, 5 * 60 * 1000);
+}
 
+function stopInactivityTimer() {
+    if (inactivityTimer) {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = null;
+    }
+}
 
-  // ---------------------------------------------------------
-  // Validate email
-  // ---------------------------------------------------------
-
-  if (!email) {
-    message.textContent =
-      "Please enter an email address.";
-    return;
-  }
-
-
-  // ---------------------------------------------------------
-  // Show progress
-  // ---------------------------------------------------------
-
-  message.textContent =
-    "Checking login session...";
-
-
-  // ---------------------------------------------------------
-  // Check current Supabase session
-  // ---------------------------------------------------------
-
-  const {
-    data: { session },
-    error: sessionError
-  } =
-    await supabaseClient.auth.getSession();
-
-
-  if (
-    sessionError ||
-    !session
-  ) {
-
-    message.textContent =
-      "Your session has expired. Please login again.";
-
-    return;
-  }
-
-
-  // ---------------------------------------------------------
-  // Send request to Edge Function
-  // ---------------------------------------------------------
-
-  message.textContent =
-    "Sending invitation email...";
-
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient.functions.invoke(
-      "admin-invite-user",
-      {
-        body: {
-          email: email,
-          role: role
+["click", "mousemove", "keydown", "scroll", "touchstart"].forEach(eventName => {
+    document.addEventListener(eventName, () => {
+        if (!document.getElementById("app").classList.contains("hidden")) {
+            startInactivityTimer();
         }
-      }
-    );
+    }, { passive: true });
+});
 
+async function sendReset() {
+    const email = document.getElementById("resetEmail").value.trim().toLowerCase();
 
-  // ---------------------------------------------------------
-  // Edge Function error
-  // ---------------------------------------------------------
+    if (!email) {
+        setMessage("resetMessage", "Please enter your email.", "error");
+        return;
+    }
 
-  if (error) {
+    setMessage("resetMessage", "Checking account...", "info");
 
-    console.error(
-      "admin-invite-user error:",
-      error
-    );
+    const { data: allowed, error: allowedError } =
+        await supabaseClient.rpc("is_report_email_allowed", { p_email: email });
 
-    message.textContent =
-      error.message ||
-      "Unable to send invitation.";
+    if (allowedError) {
+        setMessage("resetMessage", allowedError.message, "error");
+        return;
+    }
 
-    return;
-  }
+    if (!allowed) {
+        setMessage("resetMessage", "This email is not authorized for the report.", "error");
+        return;
+    }
 
+    const redirectTo = window.location.origin + "/Captured-Report/reset-password.html";
 
-  // ---------------------------------------------------------
-  // Function returned failure
-  // ---------------------------------------------------------
-
-  if (
-    !data ||
-    data.success !== true
-  ) {
-
-    console.error(
-      "Invitation response:",
-      data
-    );
-
-    message.textContent =
-      data?.message ||
-      "Unable to send invitation.";
-
-    return;
-  }
-
-
-  // ---------------------------------------------------------
-  // SUCCESS
-  // ---------------------------------------------------------
-
-  message.textContent =
-    "User added successfully and invitation email sent.";
-
-  document.getElementById(
-    "newEmail"
-  ).value = "";
-
-  document.getElementById(
-    "newRole"
-  ).value = "report";
-
-
-  // Refresh user list
-  await loadUsers();
-
-}
-
-/* ================= ACTIVE / INACTIVE ================= */
-
-async function changeStatus(id, status) {
-
-    const { error } =
-        await supabaseClient
-            .from("report_users")
-            .update({
-                active: status
-            })
-            .eq("id", id);
-
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo
+    });
 
     if (error) {
-
-        alert(error.message);
-
+        setMessage("resetMessage", error.message, "error");
         return;
     }
 
-
-    loadUsers();
-
+    setMessage("resetMessage", "Password reset email sent. Please check your inbox.", "success");
 }
 
+async function loadReport() {
+    setMessage("reportMessage", "Loading report...", "info");
 
-/* ================= DELETE ================= */
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const session = sessionData?.session;
 
-async function deleteUser(id) {
-
-    if (!confirm(
-        "Delete this user's report access?"
-    )) {
-
+    if (!session) {
+        showLogin();
         return;
     }
 
-
-    const { error } =
-        await supabaseClient
-            .from("report_users")
-            .delete()
-            .eq("id", id);
-
+    const { data, error } = await supabaseClient.functions.invoke(REPORT_FUNCTION, {
+        body: {}
+    });
 
     if (error) {
-
-        alert(error.message);
-
+        console.error(error);
+        setMessage("reportMessage", "Unable to load report. " + error.message, "error");
         return;
     }
 
+    if (!data || !data.success) {
+        setMessage("reportMessage", data?.message || "Unable to load report.", "error");
+        return;
+    }
 
-    loadUsers();
+    reportRows = Array.isArray(data.rows) ? data.rows : [];
+    isAdmin = data.isAdmin === true;
 
+    updateKpis(data);
+    renderReport();
+
+    const adminPanel = document.getElementById("adminPanel");
+    if (isAdmin) {
+        adminPanel.classList.remove("hidden");
+        renderDeleteList();
+    } else {
+        adminPanel.classList.add("hidden");
+    }
+
+    setMessage("reportMessage", "", "info");
 }
 
+function updateKpis(data) {
+    document.getElementById("totalPhotos").textContent =
+        Number(data.totalCount ?? reportRows.length);
 
-/* ================= SECURITY ================= */
+    document.getElementById("todayPhotos").textContent =
+        Number(data.todayCount ?? 0);
 
-function escapeHtml(text) {
+    document.getElementById("currentNsp").textContent =
+        Number(data.currentNspCount ?? reportRows.length);
+}
 
-    return text
+function getRowDate(row) {
+    if (row.date_time) {
+        const match = String(row.date_time).match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+        if (match) {
+            return `${match[3]}-${match[2]}-${match[1]}`;
+        }
+    }
+
+    if (row.created_at) {
+        return String(row.created_at).slice(0, 10);
+    }
+
+    return "";
+}
+
+function getSearchText(row) {
+    return [
+        row.serial_number,
+        row.file_name,
+        row.address,
+        row.latitude,
+        row.longitude,
+        row.batch_id,
+        row.date_time
+    ].filter(v => v !== null && v !== undefined)
+     .join(" ")
+     .toLowerCase();
+}
+
+function renderReport() {
+    const body = document.getElementById("reportTableBody");
+    const search = document.getElementById("searchBox").value.trim().toLowerCase();
+    const from = document.getElementById("fromDate").value;
+    const to = document.getElementById("toDate").value;
+
+    const filtered = reportRows.filter(row => {
+        if (search && !getSearchText(row).includes(search)) return false;
+
+        const rowDate = getRowDate(row);
+        if (from && rowDate < from) return false;
+        if (to && rowDate > to) return false;
+
+        return true;
+    });
+
+    if (!filtered.length) {
+        body.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align:center;padding:30px" class="muted">
+                    No records found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    body.innerHTML = filtered.map(row => `
+        <tr>
+            <td class="nowrap">${escapeHtml(row.serial_number ?? "")}</td>
+            <td class="nowrap">${escapeHtml(getDisplayDate(row))}</td>
+            <td class="nowrap">${escapeHtml(getDisplayTime(row))}</td>
+            <td style="min-width:260px">${escapeHtml(row.address ?? "")}</td>
+            <td class="nowrap">${escapeHtml(row.latitude ?? "")}</td>
+            <td class="nowrap">${escapeHtml(row.longitude ?? "")}</td>
+            <td class="nowrap">${escapeHtml(row.batch_id ?? "")}</td>
+            <td>
+                ${row.signed_url
+                    ? `<img class="thumb" src="${escapeAttribute(row.signed_url)}" alt="Photo" onclick="openImageModal('${escapeJs(row.signed_url)}')">`
+                    : `<span class="muted">No image</span>`
+                }
+            </td>
+        </tr>
+    `).join("");
+}
+
+function getDisplayDate(row) {
+    const text = String(row.date_time || "");
+    const match = text.match(/^(\d{2}\/\d{2}\/\d{4})/);
+    return match ? match[1] : getRowDate(row);
+}
+
+function getDisplayTime(row) {
+    const text = String(row.date_time || "");
+    const match = text.match(/(\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM))/i);
+    return match ? match[1] : "";
+}
+
+function clearFilters() {
+    document.getElementById("searchBox").value = "";
+    document.getElementById("fromDate").value = "";
+    document.getElementById("toDate").value = "";
+    renderReport();
+}
+
+function renderDeleteList() {
+    const list = document.getElementById("deleteList");
+
+    if (!reportRows.length) {
+        list.innerHTML = `<div style="padding:25px;text-align:center" class="muted">No files available for deletion.</div>`;
+        updateSelectionSummary();
+        return;
+    }
+
+    list.innerHTML = reportRows.map(row => {
+        const checked = deleteSelection.has(String(row.id)) ? "checked" : "";
+        return `
+            <label class="delete-row">
+                <input type="checkbox"
+                       ${checked}
+                       onchange="toggleDeleteSelection('${escapeJs(String(row.id))}', this.checked)">
+                ${row.signed_url
+                    ? `<img src="${escapeAttribute(row.signed_url)}" alt="">`
+                    : `<span class="muted">No image</span>`
+                }
+                <div>
+                    <strong>NSP ${escapeHtml(row.serial_number ?? "")}</strong><br>
+                    <span class="muted">${escapeHtml(row.file_name ?? "")}</span>
+                </div>
+                <div class="optional-col">${escapeHtml(row.date_time ?? "")}</div>
+                <div class="optional-col">${escapeHtml(row.batch_id ?? "")}</div>
+            </label>
+        `;
+    }).join("");
+
+    updateSelectionSummary();
+}
+
+function toggleDeleteSelection(id, checked) {
+    id = String(id);
+    if (checked) {
+        deleteSelection.add(id);
+    } else {
+        deleteSelection.delete(id);
+    }
+    updateSelectionSummary();
+}
+
+function selectAllForDelete() {
+    deleteSelection = new Set(reportRows.map(row => String(row.id)));
+    renderDeleteList();
+}
+
+function deselectAllForDelete() {
+    deleteSelection.clear();
+    renderDeleteList();
+}
+
+function updateSelectionSummary() {
+    document.getElementById("selectionSummary").textContent =
+        `Selected: ${deleteSelection.size} of ${reportRows.length}`;
+}
+
+async function confirmDeleteSelected() {
+    const selectedIds = Array.from(deleteSelection);
+
+    if (!selectedIds.length) {
+        setMessage("adminMessage", "Please select at least one file to delete.", "error");
+        return;
+    }
+
+    const selectedRows = reportRows.filter(row =>
+        selectedIds.includes(String(row.id))
+    );
+
+    const fileText = selectedRows
+        .slice(0, 8)
+        .map(row => `• NSP ${row.serial_number} — ${row.file_name}`)
+        .join("\n");
+
+    const moreText = selectedRows.length > 8
+        ? `\n• ...and ${selectedRows.length - 8} more`
+        : "";
+
+    const confirmed = confirm(
+        `WARNING: This will permanently delete ${selectedRows.length} selected file(s).\n\n` +
+        `Both the database record and Storage image will be deleted.\n\n` +
+        `The following selected files will be deleted:\n\n` +
+        fileText + moreText +
+        `\n\nFiles you deselected will NOT be deleted.\n\nContinue?`
+    );
+
+    if (!confirmed) return;
+
+    setMessage("adminMessage", "Deleting selected files. Please wait...", "info");
+
+    const { data, error } = await supabaseClient.functions.invoke(
+        DELETE_FUNCTION,
+        { body: { photo_ids: selectedIds.map(Number).filter(Number.isFinite) } }
+    );
+
+    if (error) {
+        console.error(error);
+        setMessage("adminMessage", "Delete failed: " + error.message, "error");
+        return;
+    }
+
+    if (!data || !data.success) {
+        setMessage("adminMessage", data?.message || "Delete failed.", "error");
+        return;
+    }
+
+    deleteSelection.clear();
+
+    setMessage(
+        "adminMessage",
+        `${data.deletedCount} file(s) deleted successfully. Current NSP count: ${data.remainingCount}.`,
+        "success"
+    );
+
+    await loadReport();
+}
+
+function openImageModal(url) {
+    if (!url) return;
+    document.getElementById("modalImage").src = url;
+    document.getElementById("imageModal").classList.remove("hidden");
+}
+
+function closeImageModal(event) {
+    if (!event || event.target.id === "imageModal") {
+        document.getElementById("imageModal").classList.add("hidden");
+        document.getElementById("modalImage").src = "";
+    }
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
-
 }
 
+function escapeAttribute(value) {
+    return escapeHtml(value);
+}
 
-/* ================= CHECK EXISTING SESSION ================= */
+function escapeJs(value) {
+    return String(value ?? "")
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'")
+        .replaceAll("\n", "\\n")
+        .replaceAll("\r", "\\r");
+}
 
 async function checkSession() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
 
-    const {
-        data: {
-            session
-        }
-    } =
-        await supabaseClient
-            .auth
-            .getSession();
-
-
-    if (!session) {
-
-        return;
+    if (session) {
+        await openApplication();
+    } else {
+        showLogin();
     }
-
-
-    const email =
-        session.user.email;
-
-
-    const {
-        data: profile
-    } =
-        await supabaseClient
-            .from("report_users")
-            .select("*")
-            .ilike("email", email)
-            .maybeSingle();
-
-
-    if (!profile || !profile.active) {
-
-        await supabaseClient
-            .auth
-            .signOut();
-
-        return;
-    }
-
-
-    currentUser = session.user;
-    currentProfile = profile;
-
-    openApplication();
-
 }
 
-
-checkSession();
-// =========================================================
-// AUTO LOGOUT AFTER 5 MINUTES OF INACTIVITY
-// =========================================================
-
-const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
-
-let inactivityTimer;
-
-function resetInactivityTimer() {
-
-    clearTimeout(inactivityTimer);
-
-    inactivityTimer = setTimeout(
-        async function () {
-
-            console.log("User inactive for 5 minutes. Logging out.");
-
-            await supabaseClient.auth.signOut();
-
-            currentUser = null;
-            currentProfile = null;
-
-            // Show login page
-            document.getElementById("app").style.display = "none";
-            document.getElementById("loginPage").style.display = "block";
-
-            // Clear login fields
-            document.getElementById("loginEmail").value = "";
-            document.getElementById("loginPassword").value = "";
-
-            // Show message
-            document.getElementById("loginMessage").textContent =
-                "You were logged out because of 5 minutes of inactivity.";
-
-        },
-        INACTIVITY_LIMIT
-    );
-}
-
-
-// Detect user activity
-[
-    "mousemove",
-    "mousedown",
-    "keydown",
-    "scroll",
-    "touchstart",
-    "click"
-].forEach(function (eventName) {
-
-    document.addEventListener(
-        eventName,
-        resetInactivityTimer,
-        true
-    );
-
+supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if (event === "SIGNED_OUT") {
+        document.getElementById("app").classList.add("hidden");
+        showLogin();
+    }
 });
 
-
-// Start the timer
-resetInactivityTimer();
-
+checkSession();
 </script>
-
 </body>
 </html>
