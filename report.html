@@ -1025,6 +1025,67 @@ async function checkSession() {
 
 
 checkSession();
+// =========================================================
+// AUTO LOGOUT AFTER 5 MINUTES OF INACTIVITY
+// =========================================================
+
+const INACTIVITY_LIMIT = 5 * 60 * 1000; // 5 minutes
+
+let inactivityTimer;
+
+function resetInactivityTimer() {
+
+    clearTimeout(inactivityTimer);
+
+    inactivityTimer = setTimeout(
+        async function () {
+
+            console.log("User inactive for 5 minutes. Logging out.");
+
+            await supabaseClient.auth.signOut();
+
+            currentUser = null;
+            currentProfile = null;
+
+            // Show login page
+            document.getElementById("app").style.display = "none";
+            document.getElementById("loginPage").style.display = "block";
+
+            // Clear login fields
+            document.getElementById("loginEmail").value = "";
+            document.getElementById("loginPassword").value = "";
+
+            // Show message
+            document.getElementById("loginMessage").textContent =
+                "You were logged out because of 5 minutes of inactivity.";
+
+        },
+        INACTIVITY_LIMIT
+    );
+}
+
+
+// Detect user activity
+[
+    "mousemove",
+    "mousedown",
+    "keydown",
+    "scroll",
+    "touchstart",
+    "click"
+].forEach(function (eventName) {
+
+    document.addEventListener(
+        eventName,
+        resetInactivityTimer,
+        true
+    );
+
+});
+
+
+// Start the timer
+resetInactivityTimer();
 
 </script>
 
