@@ -6,909 +6,400 @@
 <title>NSPIRA Report</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-    * { box-sizing: border-box; }
-    body {
-        margin: 0;
-        font-family: Arial, Helvetica, sans-serif;
-        background: #f4f6f9;
-        color: #222;
-    }
-    button, input, select { font: inherit; }
-    .hidden { display: none !important; }
-
-    /* Login */
-    .login-page {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        background: linear-gradient(135deg, #eef4ff, #f8fafc);
-    }
-    .login-card {
-        width: 100%;
-        max-width: 420px;
-        background: #fff;
-        border-radius: 16px;
-        padding: 30px;
-        box-shadow: 0 12px 35px rgba(0,0,0,.10);
-    }
-    .login-card h1 { margin: 0 0 8px; }
-    .login-card p { color: #666; margin: 0 0 22px; }
-    .field { margin-bottom: 15px; }
-    .field label {
-        display: block;
-        font-size: 13px;
-        font-weight: 700;
-        margin-bottom: 6px;
-    }
-    .field input, .field select {
-        width: 100%;
-        padding: 11px 12px;
-        border: 1px solid #ccd3dc;
-        border-radius: 8px;
-        outline: none;
-        background: #fff;
-    }
-    .field input:focus, .field select:focus {
-        border-color: #4f7cff;
-        box-shadow: 0 0 0 3px rgba(79,124,255,.12);
-    }
-
-    .btn {
-        border: 0;
-        border-radius: 8px;
-        padding: 10px 15px;
-        cursor: pointer;
-        font-weight: 700;
-    }
-    .btn-primary { background: #1769e0; color: #fff; }
-    .btn-primary:hover { background: #1259bf; }
-    .btn-secondary { background: #e9edf3; color: #222; }
-    .btn-danger { background: #d92d20; color: #fff; }
-    .btn-danger:hover { background: #b42318; }
-    .btn-small { padding: 7px 10px; font-size: 12px; }
-
-    .message {
-        margin-top: 12px;
-        padding: 10px 12px;
-        border-radius: 8px;
-        font-size: 13px;
-    }
-    .message.error { background: #fff0f0; color: #b42318; }
-    .message.success { background: #ecfdf3; color: #027a48; }
-    .message.info { background: #eff8ff; color: #175cd3; }
-
-    /* App */
-    .topbar {
-        position: sticky;
-        top: 0;
-        z-index: 20;
-        background: #fff;
-        border-bottom: 1px solid #e2e7ee;
-        padding: 13px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 15px;
-    }
-    .topbar-title { font-size: 21px; font-weight: 800; }
-    .topbar-right {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 13px;
-    }
-
-    .container {
-        max-width: 1500px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-
-    .kpis {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0,1fr));
-        gap: 15px;
-        margin-bottom: 18px;
-    }
-    .kpi {
-        background: #fff;
-        border: 1px solid #e3e8ef;
-        border-radius: 13px;
-        padding: 18px;
-        box-shadow: 0 4px 14px rgba(0,0,0,.04);
-    }
-    .kpi-label { color: #667085; font-size: 13px; font-weight: 700; }
-    .kpi-value { font-size: 30px; font-weight: 800; margin-top: 6px; }
-
-    .card {
-        background: #fff;
-        border: 1px solid #e3e8ef;
-        border-radius: 13px;
-        padding: 18px;
-        margin-bottom: 18px;
-        box-shadow: 0 4px 14px rgba(0,0,0,.04);
-    }
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-        margin-bottom: 15px;
-    }
-    .card-header h2 { margin: 0; font-size: 18px; }
-
-    .filters {
-        display: grid;
-        grid-template-columns: 1.3fr .8fr .8fr auto;
-        gap: 10px;
-        align-items: end;
-    }
-    .filters input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccd3dc;
-        border-radius: 8px;
-    }
-
-    .table-wrap {
-        overflow: auto;
-        border: 1px solid #e5e7eb;
-        border-radius: 9px;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 980px;
-    }
-    th, td {
-        padding: 10px 11px;
-        border-bottom: 1px solid #edf0f4;
-        text-align: left;
-        vertical-align: middle;
-        font-size: 13px;
-    }
-    th {
-        background: #f8fafc;
-        font-weight: 800;
-        position: sticky;
-        top: 0;
-        z-index: 2;
-    }
-    tr:hover td { background: #fbfcfe; }
-    .thumb {
-        width: 90px;
-        height: 70px;
-        object-fit: cover;
-        border-radius: 7px;
-        border: 1px solid #ddd;
-        cursor: pointer;
-        background: #f1f3f5;
-    }
-    .muted { color: #667085; }
-    .nowrap { white-space: nowrap; }
-
-    /* Admin */
-    .admin-panel {
-        border: 2px solid #f0b429;
-        background: #fffdf5;
-    }
-    .admin-toolbar {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        align-items: center;
-    }
-    .selection-summary {
-        font-size: 13px;
-        font-weight: 700;
-        color: #7a5a00;
-        margin-left: auto;
-    }
-    .delete-list {
-        max-height: 420px;
-        overflow: auto;
-        border: 1px solid #eadfb8;
-        border-radius: 8px;
-        background: #fff;
-    }
-    .delete-row {
-        display: grid;
-        grid-template-columns: 32px 80px 1fr 140px 170px;
-        gap: 10px;
-        align-items: center;
-        padding: 8px 10px;
-        border-bottom: 1px solid #f0f0f0;
-        font-size: 12px;
-    }
-    .delete-row:last-child { border-bottom: 0; }
-    .delete-row img {
-        width: 65px;
-        height: 48px;
-        object-fit: cover;
-        border-radius: 5px;
-    }
-    .danger-note {
-        background: #fff0f0;
-        border: 1px solid #fecdca;
-        color: #b42318;
-        padding: 10px 12px;
-        border-radius: 8px;
-        font-size: 13px;
-        margin-bottom: 12px;
-    }
-
-    /* Modal */
-    .modal {
-        position: fixed;
-        inset: 0;
-        z-index: 100;
-        background: rgba(0,0,0,.62);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    }
-    .modal-box {
-        background: #fff;
-        width: min(900px, 100%);
-        max-height: 90vh;
-        overflow: auto;
-        border-radius: 12px;
-        padding: 15px;
-        position: relative;
-    }
-    .modal-box img {
-        display: block;
-        max-width: 100%;
-        max-height: 78vh;
-        margin: auto;
-    }
-    .modal-close {
-        position: absolute;
-        top: 8px;
-        right: 10px;
-        border: 0;
-        background: #fff;
-        font-size: 25px;
-        cursor: pointer;
-    }
-
-    @media (max-width: 850px) {
-        .kpis { grid-template-columns: 1fr; }
-        .filters { grid-template-columns: 1fr; }
-        .selection-summary { margin-left: 0; width: 100%; }
-        .delete-row {
-            grid-template-columns: 32px 70px 1fr;
-        }
-        .delete-row > .optional-col { display: none; }
-        .topbar { align-items: flex-start; }
-        .topbar-right { flex-direction: column; align-items: flex-end; }
-    }
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f6f9;color:#222}
+button,input,select{font:inherit}
+.hidden{display:none!important}
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#eef4ff,#f8fafc)}
+.login-card{width:100%;max-width:420px;background:#fff;border-radius:16px;padding:30px;box-shadow:0 12px 35px rgba(0,0,0,.1)}
+.login-card h1{margin:0 0 8px}.login-card p{color:#666;margin:0 0 22px}
+.field{margin-bottom:15px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+.field input,.field select{width:100%;padding:11px 12px;border:1px solid #ccd3dc;border-radius:8px;outline:none;background:#fff}
+.field input:focus,.field select:focus{border-color:#4f7cff;box-shadow:0 0 0 3px rgba(79,124,255,.12)}
+.btn{border:0;border-radius:8px;padding:10px 15px;cursor:pointer;font-weight:700}
+.btn-primary{background:#1769e0;color:#fff}.btn-primary:hover{background:#1259bf}
+.btn-secondary{background:#e9edf3;color:#222}.btn-danger{background:#d92d20;color:#fff}.btn-danger:hover{background:#b42318}
+.btn-success{background:#078d57;color:#fff}.btn-small{padding:7px 10px;font-size:12px}
+.message{margin-top:12px;padding:10px 12px;border-radius:8px;font-size:13px}
+.message.error{background:#fff0f0;color:#b42318}.message.success{background:#ecfdf3;color:#027a48}.message.info{background:#eff8ff;color:#175cd3}
+.topbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #e2e7ee;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;gap:15px}
+.topbar-title{font-size:21px;font-weight:800}.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
+.container{max-width:1500px;margin:0 auto;padding:20px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-bottom:18px}
+.kpi{background:#fff;border:1px solid #e3e8ef;border-radius:13px;padding:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+.kpi-label{color:#667085;font-size:13px;font-weight:700}.kpi-value{font-size:30px;font-weight:800;margin-top:6px}
+.kpis.admin-kpis{grid-template-columns:1fr}
+.card{background:#fff;border:1px solid #e3e8ef;border-radius:13px;padding:18px;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,.04)}
+.card-header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:15px}
+.card-header h2{margin:0;font-size:18px}
+.admin-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.admin-action-card{border:2px solid #e5c55b;background:#fffdf5}
+.filters{display:grid;grid-template-columns:1.3fr .8fr .8fr 1.2fr auto;gap:10px;align-items:end}
+.filters input{width:100%;padding:10px;border:1px solid #ccd3dc;border-radius:8px}
+.table-wrap{overflow:auto;border:1px solid #e5e7eb;border-radius:9px}
+table{width:100%;border-collapse:collapse;min-width:1120px}
+th,td{padding:10px 11px;border-bottom:1px solid #edf0f4;text-align:left;vertical-align:middle;font-size:13px}
+th{background:#f8fafc;font-weight:800;position:sticky;top:0;z-index:2}
+tr:hover td{background:#fbfcfe}.thumb{width:90px;height:70px;object-fit:cover;border-radius:7px;border:1px solid #ddd;cursor:pointer;background:#f1f3f5}
+.muted{color:#667085}.nowrap{white-space:nowrap}
+.admin-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.selection-summary{font-size:13px;font-weight:700;color:#7a5a00;margin-left:auto}
+.delete-list{max-height:500px;overflow:auto;border:1px solid #eadfb8;border-radius:8px;background:#fff}
+.delete-row{display:grid;grid-template-columns:34px 80px 1fr 150px 160px 150px;gap:10px;align-items:center;padding:8px 10px;border-bottom:1px solid #f0f0f0;font-size:12px}
+.delete-row:last-child{border-bottom:0}.delete-row img{width:65px;height:48px;object-fit:cover;border-radius:5px}
+.danger-note{background:#fff0f0;border:1px solid #fecdca;color:#b42318;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:12px}
+.modal{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:#fff;width:min(900px,100%);max-height:90vh;overflow:auto;border-radius:12px;padding:15px;position:relative}
+.modal-box img{display:block;max-width:100%;max-height:78vh;margin:auto}.modal-close{position:absolute;top:8px;right:10px;border:0;background:#fff;font-size:25px;cursor:pointer}
+.user-form{display:grid;grid-template-columns:1.5fr 1fr auto;gap:10px;align-items:end}
+.user-table-wrap{overflow:auto;border:1px solid #e5e7eb;border-radius:9px;margin-top:15px}
+.user-status{font-weight:700}.status-active{color:#027a48}.status-inactive{color:#b42318}
+.download-link{display:inline-block;margin-top:5px;font-size:12px;color:#1769e0;text-decoration:none;font-weight:700}.download-link:hover{text-decoration:underline}
+.empty-state{text-align:center;padding:30px;color:#667085}
+.panel-actions{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:15px}
+.panel-actions .right{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:900px){
+.kpis{grid-template-columns:1fr}.filters{grid-template-columns:1fr}
+.user-form{grid-template-columns:1fr}.selection-summary{margin-left:0;width:100%}
+.delete-row{grid-template-columns:34px 70px 1fr}.delete-row>.optional-col{display:none}
+.topbar{align-items:flex-start}.topbar-right{flex-direction:column;align-items:flex-end}
+}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="loginPage" class="login-page">
-    <div class="login-card">
-        <h1>NSPIRA REPORT</h1>
-        <p>Secure report access</p>
-
-        <div class="field">
-            <label>Email</label>
-            <input id="loginEmail" type="email" autocomplete="username" placeholder="Enter email">
-        </div>
-
-        <div class="field">
-            <label>Password</label>
-            <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter password">
-        </div>
-
-        <button class="btn btn-primary" style="width:100%" onclick="login()">Login</button>
-
-        <div id="loginMessage" class="hidden"></div>
-
-        <div style="margin-top:14px;text-align:center">
-            <button class="btn btn-secondary btn-small" onclick="showReset()">Forgot Password?</button>
-        </div>
-    </div>
+<div class="login-card">
+<h1>NSPIRA REPORT</h1><p>Secure report access</p>
+<div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Enter email"></div>
+<div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter password"></div>
+<button class="btn btn-primary" style="width:100%" onclick="login()">Login</button>
+<div id="loginMessage" class="hidden"></div>
+<div style="margin-top:14px;text-align:center"><button class="btn btn-secondary btn-small" onclick="showReset()">Forgot Password?</button></div>
+</div>
 </div>
 
-<!-- RESET REQUEST -->
 <div id="resetPage" class="login-page hidden">
-    <div class="login-card">
-        <h1>Reset Password</h1>
-        <p>Enter your registered report email.</p>
-
-        <div class="field">
-            <label>Email</label>
-            <input id="resetEmail" type="email" placeholder="Enter email">
-        </div>
-
-        <button class="btn btn-primary" style="width:100%" onclick="sendReset()">Send Reset Email</button>
-
-        <div id="resetMessage" class="hidden"></div>
-
-        <div style="margin-top:14px;text-align:center">
-            <button class="btn btn-secondary btn-small" onclick="showLogin()">Back to Login</button>
-        </div>
-    </div>
+<div class="login-card">
+<h1>Reset Password</h1><p>Enter your registered report email.</p>
+<div class="field"><label>Email</label><input id="resetEmail" type="email" placeholder="Enter email"></div>
+<button class="btn btn-primary" style="width:100%" onclick="sendReset()">Send Reset Email</button>
+<div id="resetMessage" class="hidden"></div>
+<div style="margin-top:14px;text-align:center"><button class="btn btn-secondary btn-small" onclick="showLogin()">Back to Login</button></div>
+</div>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
-    <div class="topbar">
-        <div class="topbar-title">NSPIRA REPORT</div>
-        <div class="topbar-right">
-            <span id="userEmail"></span>
-            <button class="btn btn-secondary btn-small" onclick="logout()">Logout</button>
-        </div>
-    </div>
-
-    <main class="container">
-        <section class="kpis">
-            <div class="kpi">
-                <div class="kpi-label">Total Photos</div>
-                <div id="totalPhotos" class="kpi-value">0</div>
-            </div>
-            <div class="kpi">
-                <div class="kpi-label">Today</div>
-                <div id="todayPhotos" class="kpi-value">0</div>
-            </div>
-            <div class="kpi">
-                <div class="kpi-label">Current NSP Count</div>
-                <div id="currentNsp" class="kpi-value">0</div>
-            </div>
-        </section>
-
-        <section class="card">
-            <div class="card-header">
-                <h2>Photo Report</h2>
-                <button class="btn btn-secondary btn-small" onclick="loadReport()">Refresh</button>
-            </div>
-
-            <div class="filters">
-                <div>
-                    <label class="muted" style="font-size:12px;font-weight:700">Search</label>
-                    <input id="searchBox" placeholder="Search NSP, file name, address, batch..." oninput="renderReport()">
-                </div>
-                <div>
-                    <label class="muted" style="font-size:12px;font-weight:700">From Date</label>
-                    <input id="fromDate" type="date" onchange="renderReport()">
-                </div>
-                <div>
-                    <label class="muted" style="font-size:12px;font-weight:700">To Date</label>
-                    <input id="toDate" type="date" onchange="renderReport()">
-                </div>
-                <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
-            </div>
-
-            <div id="reportMessage" class="hidden"></div>
-
-            <div class="table-wrap" style="margin-top:15px">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>NSP</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                            <th>Address</th>
-                            <th>Latitude</th>
-                            <th>Longitude</th>
-                            <th>Batch</th>
-                            <th>Image</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reportTableBody"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- ADMIN ONLY -->
-        <section id="adminPanel" class="card admin-panel hidden">
-            <div class="card-header">
-                <div>
-                    <h2>Admin — NSP Reset / Delete Photos</h2>
-                    <div class="muted" style="font-size:12px;margin-top:4px">
-                        Select the files you want permanently deleted. Unchecked files will remain untouched.
-                    </div>
-                </div>
-                <div class="admin-toolbar">
-                    <button class="btn btn-secondary btn-small" onclick="selectAllForDelete()">Select All</button>
-                    <button class="btn btn-secondary btn-small" onclick="deselectAllForDelete()">Deselect All</button>
-                    <span id="selectionSummary" class="selection-summary">Selected: 0</span>
-                </div>
-            </div>
-
-            <div class="danger-note">
-                <strong>Permanent deletion:</strong> selected database records and their corresponding files from the
-                private <strong>photo-stamping</strong> Storage bucket will be deleted. This cannot be undone.
-            </div>
-
-            <div id="adminMessage" class="hidden"></div>
-
-            <div class="delete-list" id="deleteList"></div>
-
-            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px">
-                <button class="btn btn-secondary" onclick="deselectAllForDelete()">Cancel Selection</button>
-                <button class="btn btn-danger" onclick="confirmDeleteSelected()">Delete Selected &amp; Reset NSP</button>
-            </div>
-        </section>
-    </main>
+<div class="topbar">
+<div class="topbar-title">NSPIRA REPORT</div>
+<div class="topbar-right"><span id="userEmail"></span><button class="btn btn-secondary btn-small" onclick="logout()">Logout</button></div>
 </div>
 
-<!-- IMAGE MODAL -->
+<main class="container">
+<section id="kpiSection" class="kpis">
+<div class="kpi"><div class="kpi-label">Total Photos</div><div id="totalPhotos" class="kpi-value">0</div></div>
+<div id="todayKpi" class="kpi"><div class="kpi-label">Today</div><div id="todayPhotos" class="kpi-value">0</div></div>
+<div id="nspKpi" class="kpi"><div class="kpi-label">Current NSP Count</div><div id="currentNsp" class="kpi-value">0</div></div>
+</section>
+
+<section id="adminActions" class="admin-actions hidden">
+<button class="btn btn-danger" onclick="openDeletePanel()">NSP Reset / Delete</button>
+<button class="btn btn-primary" onclick="openUserPanel()">Add User</button>
+</section>
+
+<section id="reportCard" class="card">
+<div class="card-header"><h2>Photo Report</h2><button class="btn btn-secondary btn-small" onclick="loadReport()">Refresh</button></div>
+<div class="filters">
+<div><label class="muted" style="font-size:12px;font-weight:700">Search</label><input id="searchBox" placeholder="Search NSP, file name, address, batch..." oninput="renderReport()"></div>
+<div><label class="muted" style="font-size:12px;font-weight:700">From Date</label><input id="fromDate" type="date" onchange="renderReport()"></div>
+<div><label class="muted" style="font-size:12px;font-weight:700">To Date</label><input id="toDate" type="date" onchange="renderReport()"></div>
+<div><label class="muted" style="font-size:12px;font-weight:700">Address</label><input id="addressFilter" placeholder="Search address..." oninput="renderReport()"></div>
+<button class="btn btn-secondary" onclick="clearReportFilters()">Clear</button>
+</div>
+<div id="reportMessage" class="hidden"></div>
+<div class="table-wrap" style="margin-top:15px">
+<table><thead><tr><th>NSP</th><th>Date</th><th>Time</th><th>Address</th><th>Latitude</th><th>Longitude</th><th>Batch</th><th>Image</th><th>Action</th></tr></thead>
+<tbody id="reportTableBody"></tbody></table>
+</div>
+</section>
+
+<section id="deletePanel" class="card admin-action-card hidden">
+<div class="panel-actions">
+<div><h2 style="margin:0">NSP Reset / Delete Photos</h2><div class="muted" style="font-size:12px;margin-top:4px">Choose filters first. Only checked files will be permanently deleted.</div></div>
+<div class="right"><button class="btn btn-secondary btn-small" onclick="backToAdminHome()">Back</button></div>
+</div>
+<div class="filters">
+<div><label class="muted" style="font-size:12px;font-weight:700">NSP / File Name</label><input id="deleteSearch" placeholder="Search NSP or file name..." oninput="renderDeleteList()"></div>
+<div><label class="muted" style="font-size:12px;font-weight:700">From Date</label><input id="deleteFromDate" type="date" onchange="renderDeleteList()"></div>
+<div><label class="muted" style="font-size:12px;font-weight:700">To Date</label><input id="deleteToDate" type="date" onchange="renderDeleteList()"></div>
+<div><label class="muted" style="font-size:12px;font-weight:700">Address</label><input id="deleteAddress" placeholder="Search address..." oninput="renderDeleteList()"></div>
+<button class="btn btn-secondary" onclick="clearDeleteFilters()">Clear</button>
+</div>
+<div class="card-header" style="margin-top:15px;margin-bottom:10px">
+<div class="admin-toolbar"><button class="btn btn-secondary btn-small" onclick="selectAllVisibleForDelete()">Select All Visible</button><button class="btn btn-secondary btn-small" onclick="deselectAllVisibleForDelete()">Deselect Visible</button></div>
+<span id="selectionSummary" class="selection-summary">Selected: 0</span>
+</div>
+<div class="danger-note"><strong>Permanent deletion:</strong> selected database records and corresponding files from the private <strong>photo-stamping</strong> Storage bucket will be deleted. Unchecked files will remain untouched.</div>
+<div id="adminMessage" class="hidden"></div>
+<div class="delete-list" id="deleteList"></div>
+<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px">
+<button class="btn btn-secondary" onclick="backToAdminHome()">Cancel</button>
+<button class="btn btn-danger" onclick="confirmDeleteSelected()">Delete Selected &amp; Reset NSP</button>
+</div>
+</section>
+
+<section id="userPanel" class="card admin-action-card hidden">
+<div class="panel-actions">
+<div><h2 style="margin:0">Admin — User Management</h2><div class="muted" style="font-size:12px;margin-top:4px">Add report users or administrators and manage access.</div></div>
+<div class="right"><button class="btn btn-secondary btn-small" onclick="backToAdminHome()">Back</button></div>
+</div>
+<div class="card" style="margin:0;background:#fff">
+<h3 style="margin-top:0">Add User</h3>
+<div class="user-form">
+<div class="field" style="margin:0"><label>Email</label><input id="newEmail" type="email" placeholder="user@example.com"></div>
+<div class="field" style="margin:0"><label>Role</label><select id="newRole"><option value="report">Report</option><option value="admin">Admin</option></select></div>
+<button class="btn btn-primary" onclick="addUser()">Add User</button>
+</div>
+<div id="userAddMessage" class="hidden"></div>
+</div>
+<div style="margin-top:15px">
+<div class="card-header"><h3 style="margin:0">Existing Users</h3><button class="btn btn-secondary btn-small" onclick="loadUsers()">Refresh</button></div>
+<div class="user-table-wrap">
+<table style="min-width:800px"><thead><tr><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody id="userTableBody"></tbody></table>
+</div>
+</div>
+</section>
+</main>
+</div>
+
 <div id="imageModal" class="modal hidden" onclick="closeImageModal(event)">
-    <div class="modal-box">
-        <button class="modal-close" onclick="closeImageModal()">×</button>
-        <img id="modalImage" src="" alt="Photo">
-    </div>
+<div class="modal-box"><button class="modal-close" onclick="closeImageModal()">×</button><img id="modalImage" src="" alt="Photo"></div>
 </div>
 
 <script>
-const SUPABASE_URL = "https://zgowfgfuaglpmoigfktx.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_fz31GlOgQRS9nhiCjN0XnA_0g4K7H_S";
+const SUPABASE_URL="https://zgowfgfuaglpmoigfktx.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_fz31GlOgQRS9nhiCjN0XnA_0g4K7H_S";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const REPORT_FUNCTION="report-photos";
+const DELETE_FUNCTION="admin-delete-photos";
+const USER_FUNCTION="admin-user-management";
+let reportRows=[],deleteSelection=new Set(),inactivityTimer=null,isAdmin=false;
 
-const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-);
+function setMessage(id,text,type="info"){const el=document.getElementById(id);if(!el)return;el.className="message "+type;el.textContent=text||"";if(!text)el.classList.add("hidden")}
+function showLogin(){document.getElementById("resetPage").classList.add("hidden");document.getElementById("loginPage").classList.remove("hidden")}
+function showReset(){document.getElementById("loginPage").classList.add("hidden");document.getElementById("resetPage").classList.remove("hidden");document.getElementById("resetMessage").classList.add("hidden")}
 
-const REPORT_FUNCTION = "report-photos";
-const DELETE_FUNCTION = "admin-delete-photos";
-
-let reportRows = [];
-let deleteSelection = new Set();
-let inactivityTimer = null;
-let isAdmin = false;
-
-function setMessage(id, text, type = "info") {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.className = "message " + type;
-    el.textContent = text || "";
-    if (!text) el.classList.add("hidden");
+async function login(){
+const email=document.getElementById("loginEmail").value.trim(),password=document.getElementById("loginPassword").value;
+if(!email||!password){setMessage("loginMessage","Please enter email and password.","error");return}
+setMessage("loginMessage","Signing in...","info");
+const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+if(error){setMessage("loginMessage",error.message,"error");return}
+await openApplication();
 }
 
-function showLogin() {
-    document.getElementById("resetPage").classList.add("hidden");
-    document.getElementById("loginPage").classList.remove("hidden");
-}
-function showReset() {
-    document.getElementById("loginPage").classList.add("hidden");
-    document.getElementById("resetPage").classList.remove("hidden");
-    document.getElementById("resetMessage").classList.add("hidden");
+async function openApplication(){
+const {data:{user}}=await supabaseClient.auth.getUser();
+if(!user){showLogin();return}
+document.getElementById("loginPage").classList.add("hidden");document.getElementById("resetPage").classList.add("hidden");document.getElementById("app").classList.remove("hidden");document.getElementById("userEmail").textContent=user.email||"";
+startInactivityTimer();await loadReport();
 }
 
-async function login() {
-    const email = document.getElementById("loginEmail").value.trim();
-    const password = document.getElementById("loginPassword").value;
+async function logout(){
+stopInactivityTimer();await supabaseClient.auth.signOut();
+document.getElementById("app").classList.add("hidden");document.getElementById("deletePanel").classList.add("hidden");document.getElementById("userPanel").classList.add("hidden");showLogin();
+}
+function startInactivityTimer(){stopInactivityTimer();inactivityTimer=setTimeout(async()=>{alert("You have been logged out due to 5 minutes of inactivity.");await logout()},5*60*1000)}
+function stopInactivityTimer(){if(inactivityTimer){clearTimeout(inactivityTimer);inactivityTimer=null}}
+["click","mousemove","keydown","scroll","touchstart"].forEach(e=>document.addEventListener(e,()=>{if(!document.getElementById("app").classList.contains("hidden"))startInactivityTimer()},{passive:true}));
 
-    if (!email || !password) {
-        setMessage("loginMessage", "Please enter email and password.", "error");
-        return;
-    }
-
-    setMessage("loginMessage", "Signing in...", "info");
-
-    const { error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password
-    });
-
-    if (error) {
-        setMessage("loginMessage", error.message, "error");
-        return;
-    }
-
-    await openApplication();
+async function sendReset(){
+const email=document.getElementById("resetEmail").value.trim().toLowerCase();
+if(!email){setMessage("resetMessage","Please enter your email.","error");return}
+setMessage("resetMessage","Checking account...","info");
+const {data:allowed,error:allowedError}=await supabaseClient.rpc("is_report_email_allowed",{p_email:email});
+if(allowedError){setMessage("resetMessage",allowedError.message,"error");return}
+if(!allowed){setMessage("resetMessage","This email is not authorized for the report.","error");return}
+const redirectTo=window.location.origin+"/Captured-Report/reset-password.html";
+const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo});
+if(error){setMessage("resetMessage",error.message,"error");return}
+setMessage("resetMessage","Password reset email sent. Please check your inbox.","success");
 }
 
-async function openApplication() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-
-    if (!user) {
-        showLogin();
-        return;
-    }
-
-    document.getElementById("loginPage").classList.add("hidden");
-    document.getElementById("resetPage").classList.add("hidden");
-    document.getElementById("app").classList.remove("hidden");
-    document.getElementById("userEmail").textContent = user.email || "";
-
-    startInactivityTimer();
-    await loadReport();
+async function loadReport(){
+setMessage("reportMessage","Loading report...","info");
+const {data:sessionData}=await supabaseClient.auth.getSession(),session=sessionData?.session;
+if(!session){showLogin();return}
+const {data,error}=await supabaseClient.functions.invoke(REPORT_FUNCTION,{body:{}});
+if(error){console.error(error);setMessage("reportMessage","Unable to load report. "+error.message,"error");return}
+if(!data||!data.success){setMessage("reportMessage",data?.message||"Unable to load report.","error");return}
+reportRows=Array.isArray(data.rows)?data.rows:[];isAdmin=data.isAdmin===true;
+updateKpis(data);
+document.getElementById("adminActions").classList.toggle("hidden",!isAdmin);
+document.getElementById("todayKpi").classList.toggle("hidden",isAdmin);
+document.getElementById("nspKpi").classList.toggle("hidden",isAdmin);
+if(isAdmin){
+document.getElementById("kpiSection").classList.add("admin-kpis");
+document.getElementById("reportCard").classList.add("hidden");
+document.getElementById("deletePanel").classList.add("hidden");
+document.getElementById("userPanel").classList.add("hidden");
+}else{
+document.getElementById("kpiSection").classList.remove("admin-kpis");
+document.getElementById("reportCard").classList.remove("hidden");
+}
+renderReport();renderDeleteList();setMessage("reportMessage","","info");
 }
 
-async function logout() {
-    stopInactivityTimer();
-    await supabaseClient.auth.signOut();
-    document.getElementById("app").classList.add("hidden");
-    document.getElementById("adminPanel").classList.add("hidden");
-    showLogin();
+function updateKpis(data){
+document.getElementById("totalPhotos").textContent=Number(data.totalCount??reportRows.length);
+document.getElementById("todayPhotos").textContent=Number(data.todayCount??0);
+document.getElementById("currentNsp").textContent=Number(data.currentNspCount??reportRows.length);
+}
+function getRowDate(row){
+const text=String(row.date_time||""),m=text.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+if(m)return `${m[3]}-${m[2]}-${m[1]}`;
+return row.created_at?String(row.created_at).slice(0,10):"";
+}
+function getSearchText(row){return [row.serial_number,row.file_name,row.address,row.latitude,row.longitude,row.batch_id,row.date_time].filter(v=>v!==null&&v!==undefined).join(" ").toLowerCase()}
+function rowMatchesFilters(row,prefix=""){
+const search=document.getElementById(prefix+"Search").value.trim().toLowerCase();
+const from=document.getElementById(prefix+"FromDate").value,to=document.getElementById(prefix+"ToDate").value,address=document.getElementById(prefix+"Address").value.trim().toLowerCase();
+if(search&&!getSearchText(row).includes(search))return false;
+const d=getRowDate(row);if(from&&d<from)return false;if(to&&d>to)return false;
+if(address&&!String(row.address||"").toLowerCase().includes(address))return false;
+return true;
+}
+function renderReport(){
+const body=document.getElementById("reportTableBody");
+const filtered=reportRows.filter(r=>rowMatchesFilters(r,""));
+if(!filtered.length){body.innerHTML=`<tr><td colspan="9" class="empty-state">No records found.</td></tr>`;return}
+body.innerHTML=filtered.map(row=>`<tr>
+<td class="nowrap">${escapeHtml(row.serial_number)}</td><td class="nowrap">${escapeHtml(getDisplayDate(row))}</td><td class="nowrap">${escapeHtml(getDisplayTime(row))}</td>
+<td style="min-width:260px">${escapeHtml(row.address)}</td><td class="nowrap">${escapeHtml(row.latitude)}</td><td class="nowrap">${escapeHtml(row.longitude)}</td><td class="nowrap">${escapeHtml(row.batch_id)}</td>
+<td>${row.signed_url?`<img class="thumb" src="${escapeAttribute(row.signed_url)}" alt="Photo" onclick="openImageModal('${escapeJs(row.signed_url)}')">`:`<span class="muted">No image</span>`}</td>
+<td class="nowrap">${row.signed_url?`<button class="btn btn-secondary btn-small" onclick="downloadPhoto('${escapeJs(row.signed_url)}','${escapeJs(row.file_name || `NSP_${row.serial_number || row.id}.jpg`)}')">Download</button>`:`-`}</td>
+</tr>`).join("");
+}
+function getDisplayDate(row){const m=String(row.date_time||"").match(/^(\d{2}\/\d{2}\/\d{4})/);return m?m[1]:getRowDate(row)}
+function getDisplayTime(row){const m=String(row.date_time||"").match(/(\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM))/i);return m?m[1]:""}
+function clearReportFilters(){["searchBox","fromDate","toDate","addressFilter"].forEach(id=>document.getElementById(id).value="");renderReport()}
+
+function openDeletePanel(){
+if(!isAdmin)return;
+document.getElementById("reportCard").classList.add("hidden");
+document.getElementById("userPanel").classList.add("hidden");
+document.getElementById("deletePanel").classList.remove("hidden");
+clearDeleteFilters();renderDeleteList();window.scrollTo({top:0,behavior:"smooth"});
+}
+function openUserPanel(){
+if(!isAdmin)return;
+document.getElementById("reportCard").classList.add("hidden");
+document.getElementById("deletePanel").classList.add("hidden");
+document.getElementById("userPanel").classList.remove("hidden");
+loadUsers();window.scrollTo({top:0,behavior:"smooth"});
+}
+function backToAdminHome(){
+if(!isAdmin)return;
+document.getElementById("deletePanel").classList.add("hidden");document.getElementById("userPanel").classList.add("hidden");
+document.getElementById("reportCard").classList.add("hidden");window.scrollTo({top:0,behavior:"smooth"});
+}
+function renderDeleteList(){
+const list=document.getElementById("deleteList");
+const filtered=reportRows.filter(r=>rowMatchesFilters(r,"delete"));
+if(!filtered.length){list.innerHTML=`<div class="empty-state">No files match the selected filters.</div>`;updateSelectionSummary();return}
+list.innerHTML=filtered.map(row=>{
+const id=String(row.id),checked=deleteSelection.has(id)?"checked":"";
+return `<label class="delete-row">
+<input type="checkbox" ${checked} onchange="toggleDeleteSelection('${escapeJs(id)}',this.checked)">
+${row.signed_url?`<img src="${escapeAttribute(row.signed_url)}" alt="">`:`<span class="muted">No image</span>`}
+<div><strong>NSP ${escapeHtml(row.serial_number)}</strong><br><span class="muted">${escapeHtml(row.file_name)}</span></div>
+<div class="optional-col">${escapeHtml(row.date_time)}</div><div class="optional-col">${escapeHtml(row.address)}</div><div class="optional-col">${escapeHtml(row.batch_id)}</div>
+</label>`}).join("");
+updateSelectionSummary();
+}
+function toggleDeleteSelection(id,checked){id=String(id);checked?deleteSelection.add(id):deleteSelection.delete(id);updateSelectionSummary()}
+function selectAllVisibleForDelete(){reportRows.filter(r=>rowMatchesFilters(r,"delete")).forEach(r=>deleteSelection.add(String(r.id)));renderDeleteList()}
+function deselectAllVisibleForDelete(){reportRows.filter(r=>rowMatchesFilters(r,"delete")).forEach(r=>deleteSelection.delete(String(r.id)));renderDeleteList()}
+function updateSelectionSummary(){document.getElementById("selectionSummary").textContent=`Selected: ${deleteSelection.size}`}
+function clearDeleteFilters(){["deleteSearch","deleteFromDate","deleteToDate","deleteAddress"].forEach(id=>document.getElementById(id).value="");renderDeleteList()}
+async function confirmDeleteSelected(){
+const ids=Array.from(deleteSelection);
+if(!ids.length){setMessage("adminMessage","Please select at least one file to delete.","error");return}
+const rows=reportRows.filter(r=>ids.includes(String(r.id)));
+const fileText=rows.slice(0,10).map(r=>`• NSP ${r.serial_number} — ${r.file_name}`).join("\n");
+const more=rows.length>10?`\n• ...and ${rows.length-10} more`:"";
+if(!confirm(`WARNING: ${rows.length} selected file(s) will be permanently deleted.\n\n${fileText}${more}\n\nUnchecked files will NOT be deleted.\n\nContinue?`))return;
+setMessage("adminMessage","Deleting selected files. Please wait...","info");
+const {data,error}=await supabaseClient.functions.invoke(DELETE_FUNCTION,{body:{photo_ids:ids.map(Number).filter(Number.isFinite)}});
+if(error){console.error(error);setMessage("adminMessage","Delete failed: "+error.message,"error");return}
+if(!data?.success){setMessage("adminMessage",data?.message||"Delete failed.","error");return}
+deleteSelection.clear();
+await loadReport();
+if(isAdmin){document.getElementById("reportCard").classList.add("hidden");document.getElementById("deletePanel").classList.remove("hidden");renderDeleteList()}
+setMessage("adminMessage",`${data.deletedCount} file(s) deleted successfully. Remaining NSP count: ${data.remainingCount}.`,"success");
 }
 
-function startInactivityTimer() {
-    stopInactivityTimer();
-    inactivityTimer = setTimeout(async () => {
-        alert("You have been logged out due to 5 minutes of inactivity.");
-        await logout();
-    }, 5 * 60 * 1000);
+async function addUser(){
+const email=document.getElementById("newEmail").value.trim().toLowerCase(),role=document.getElementById("newRole").value;
+if(!email){setMessage("userAddMessage","Please enter an email address.","error");return}
+setMessage("userAddMessage","Adding user and sending invitation...","info");
+const {data,error}=await supabaseClient.functions.invoke("admin-invite-user",{body:{email,role}});
+if(error){console.error(error);setMessage("userAddMessage","Unable to add user: "+error.message,"error");return}
+if(!data?.success){setMessage("userAddMessage",data?.message||"Unable to add user.","error");return}
+document.getElementById("newEmail").value="";
+setMessage("userAddMessage","User added successfully and invitation email sent.","success");
+await loadUsers();
+}
+async function loadUsers(){
+const body=document.getElementById("userTableBody");
+if(!body)return;
+body.innerHTML=`<tr><td colspan="5" class="empty-state">Loading users...</td></tr>`;
+const {data,error}=await supabaseClient.functions.invoke(USER_FUNCTION,{body:{action:"list"}});
+if(error){body.innerHTML=`<tr><td colspan="5" class="empty-state">Unable to load users: ${escapeHtml(error.message)}</td></tr>`;return}
+if(!data?.success){body.innerHTML=`<tr><td colspan="5" class="empty-state">${escapeHtml(data?.message||"Unable to load users.")}</td></tr>`;return}
+if(!data.users?.length){body.innerHTML=`<tr><td colspan="5" class="empty-state">No users found.</td></tr>`;return}
+body.innerHTML=data.users.map(u=>`<tr>
+<td>${escapeHtml(u.email)}</td><td>${escapeHtml(u.role)}</td><td class="user-status ${u.active?"status-active":"status-inactive"}">${u.active?"Active":"Inactive"}</td><td class="nowrap">${escapeHtml(formatCreated(u.created_at))}</td>
+<td class="nowrap"><button class="btn btn-secondary btn-small" onclick="changeUserStatus('${escapeJs(u.id)}',${!u.active})">${u.active?"Deactivate":"Activate"}</button>
+<button class="btn btn-danger btn-small" onclick="deleteUserAccess('${escapeJs(u.id)}','${escapeJs(u.email)}')">Delete</button></td>
+</tr>`).join("");
+}
+function formatCreated(v){if(!v)return"";try{return new Date(v).toLocaleString("en-IN",{dateStyle:"medium",timeStyle:"short"})}catch{return String(v)}}
+async function changeUserStatus(id,active){
+const action=active?"activate":"deactivate";
+if(!confirm(`Are you sure you want to ${action} this user?`))return;
+const {data,error}=await supabaseClient.functions.invoke(USER_FUNCTION,{body:{action:"status",id,active}});
+if(error){setMessage("userAddMessage",error.message,"error");return}
+if(!data?.success){setMessage("userAddMessage",data?.message||"Unable to update user.","error");return}
+setMessage("userAddMessage",`User ${active?"activated":"deactivated"} successfully.`,"success");await loadUsers();
+}
+async function deleteUserAccess(id,email){
+if(!confirm(`Delete report access for ${email}?\n\nThis removes the user's report access record.`))return;
+const {data,error}=await supabaseClient.functions.invoke(USER_FUNCTION,{body:{action:"delete",id}});
+if(error){setMessage("userAddMessage",error.message,"error");return}
+if(!data?.success){setMessage("userAddMessage",data?.message||"Unable to delete user.","error");return}
+setMessage("userAddMessage","User access deleted successfully.","success");await loadUsers();
 }
 
-function stopInactivityTimer() {
-    if (inactivityTimer) {
-        clearTimeout(inactivityTimer);
-        inactivityTimer = null;
-    }
+async function downloadPhoto(url,fileName){
+if(!url)return;
+try{
+const response=await fetch(url);
+if(!response.ok)throw new Error("Unable to download the image.");
+const blob=await response.blob();
+const objectUrl=URL.createObjectURL(blob);
+const a=document.createElement("a");a.href=objectUrl;a.download=fileName||"photo.jpg";document.body.appendChild(a);a.click();a.remove();
+setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
+}catch(error){console.error(error);window.open(url,"_blank","noopener");}
 }
-
-["click", "mousemove", "keydown", "scroll", "touchstart"].forEach(eventName => {
-    document.addEventListener(eventName, () => {
-        if (!document.getElementById("app").classList.contains("hidden")) {
-            startInactivityTimer();
-        }
-    }, { passive: true });
-});
-
-async function sendReset() {
-    const email = document.getElementById("resetEmail").value.trim().toLowerCase();
-
-    if (!email) {
-        setMessage("resetMessage", "Please enter your email.", "error");
-        return;
-    }
-
-    setMessage("resetMessage", "Checking account...", "info");
-
-    const { data: allowed, error: allowedError } =
-        await supabaseClient.rpc("is_report_email_allowed", { p_email: email });
-
-    if (allowedError) {
-        setMessage("resetMessage", allowedError.message, "error");
-        return;
-    }
-
-    if (!allowed) {
-        setMessage("resetMessage", "This email is not authorized for the report.", "error");
-        return;
-    }
-
-    const redirectTo = window.location.origin + "/Captured-Report/reset-password.html";
-
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo
-    });
-
-    if (error) {
-        setMessage("resetMessage", error.message, "error");
-        return;
-    }
-
-    setMessage("resetMessage", "Password reset email sent. Please check your inbox.", "success");
-}
-
-async function loadReport() {
-    setMessage("reportMessage", "Loading report...", "info");
-
-    const { data: sessionData } = await supabaseClient.auth.getSession();
-    const session = sessionData?.session;
-
-    if (!session) {
-        showLogin();
-        return;
-    }
-
-    const { data, error } = await supabaseClient.functions.invoke(REPORT_FUNCTION, {
-        body: {}
-    });
-
-    if (error) {
-        console.error(error);
-        setMessage("reportMessage", "Unable to load report. " + error.message, "error");
-        return;
-    }
-
-    if (!data || !data.success) {
-        setMessage("reportMessage", data?.message || "Unable to load report.", "error");
-        return;
-    }
-
-    reportRows = Array.isArray(data.rows) ? data.rows : [];
-    isAdmin = data.isAdmin === true;
-
-    updateKpis(data);
-    renderReport();
-
-    const adminPanel = document.getElementById("adminPanel");
-    if (isAdmin) {
-        adminPanel.classList.remove("hidden");
-        renderDeleteList();
-    } else {
-        adminPanel.classList.add("hidden");
-    }
-
-    setMessage("reportMessage", "", "info");
-}
-
-function updateKpis(data) {
-    document.getElementById("totalPhotos").textContent =
-        Number(data.totalCount ?? reportRows.length);
-
-    document.getElementById("todayPhotos").textContent =
-        Number(data.todayCount ?? 0);
-
-    document.getElementById("currentNsp").textContent =
-        Number(data.currentNspCount ?? reportRows.length);
-}
-
-function getRowDate(row) {
-    if (row.date_time) {
-        const match = String(row.date_time).match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-        if (match) {
-            return `${match[3]}-${match[2]}-${match[1]}`;
-        }
-    }
-
-    if (row.created_at) {
-        return String(row.created_at).slice(0, 10);
-    }
-
-    return "";
-}
-
-function getSearchText(row) {
-    return [
-        row.serial_number,
-        row.file_name,
-        row.address,
-        row.latitude,
-        row.longitude,
-        row.batch_id,
-        row.date_time
-    ].filter(v => v !== null && v !== undefined)
-     .join(" ")
-     .toLowerCase();
-}
-
-function renderReport() {
-    const body = document.getElementById("reportTableBody");
-    const search = document.getElementById("searchBox").value.trim().toLowerCase();
-    const from = document.getElementById("fromDate").value;
-    const to = document.getElementById("toDate").value;
-
-    const filtered = reportRows.filter(row => {
-        if (search && !getSearchText(row).includes(search)) return false;
-
-        const rowDate = getRowDate(row);
-        if (from && rowDate < from) return false;
-        if (to && rowDate > to) return false;
-
-        return true;
-    });
-
-    if (!filtered.length) {
-        body.innerHTML = `
-            <tr>
-                <td colspan="8" style="text-align:center;padding:30px" class="muted">
-                    No records found.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    body.innerHTML = filtered.map(row => `
-        <tr>
-            <td class="nowrap">${escapeHtml(row.serial_number ?? "")}</td>
-            <td class="nowrap">${escapeHtml(getDisplayDate(row))}</td>
-            <td class="nowrap">${escapeHtml(getDisplayTime(row))}</td>
-            <td style="min-width:260px">${escapeHtml(row.address ?? "")}</td>
-            <td class="nowrap">${escapeHtml(row.latitude ?? "")}</td>
-            <td class="nowrap">${escapeHtml(row.longitude ?? "")}</td>
-            <td class="nowrap">${escapeHtml(row.batch_id ?? "")}</td>
-            <td>
-                ${row.signed_url
-                    ? `<img class="thumb" src="${escapeAttribute(row.signed_url)}" alt="Photo" onclick="openImageModal('${escapeJs(row.signed_url)}')">`
-                    : `<span class="muted">No image</span>`
-                }
-            </td>
-        </tr>
-    `).join("");
-}
-
-function getDisplayDate(row) {
-    const text = String(row.date_time || "");
-    const match = text.match(/^(\d{2}\/\d{2}\/\d{4})/);
-    return match ? match[1] : getRowDate(row);
-}
-
-function getDisplayTime(row) {
-    const text = String(row.date_time || "");
-    const match = text.match(/(\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM))/i);
-    return match ? match[1] : "";
-}
-
-function clearFilters() {
-    document.getElementById("searchBox").value = "";
-    document.getElementById("fromDate").value = "";
-    document.getElementById("toDate").value = "";
-    renderReport();
-}
-
-function renderDeleteList() {
-    const list = document.getElementById("deleteList");
-
-    if (!reportRows.length) {
-        list.innerHTML = `<div style="padding:25px;text-align:center" class="muted">No files available for deletion.</div>`;
-        updateSelectionSummary();
-        return;
-    }
-
-    list.innerHTML = reportRows.map(row => {
-        const checked = deleteSelection.has(String(row.id)) ? "checked" : "";
-        return `
-            <label class="delete-row">
-                <input type="checkbox"
-                       ${checked}
-                       onchange="toggleDeleteSelection('${escapeJs(String(row.id))}', this.checked)">
-                ${row.signed_url
-                    ? `<img src="${escapeAttribute(row.signed_url)}" alt="">`
-                    : `<span class="muted">No image</span>`
-                }
-                <div>
-                    <strong>NSP ${escapeHtml(row.serial_number ?? "")}</strong><br>
-                    <span class="muted">${escapeHtml(row.file_name ?? "")}</span>
-                </div>
-                <div class="optional-col">${escapeHtml(row.date_time ?? "")}</div>
-                <div class="optional-col">${escapeHtml(row.batch_id ?? "")}</div>
-            </label>
-        `;
-    }).join("");
-
-    updateSelectionSummary();
-}
-
-function toggleDeleteSelection(id, checked) {
-    id = String(id);
-    if (checked) {
-        deleteSelection.add(id);
-    } else {
-        deleteSelection.delete(id);
-    }
-    updateSelectionSummary();
-}
-
-function selectAllForDelete() {
-    deleteSelection = new Set(reportRows.map(row => String(row.id)));
-    renderDeleteList();
-}
-
-function deselectAllForDelete() {
-    deleteSelection.clear();
-    renderDeleteList();
-}
-
-function updateSelectionSummary() {
-    document.getElementById("selectionSummary").textContent =
-        `Selected: ${deleteSelection.size} of ${reportRows.length}`;
-}
-
-async function confirmDeleteSelected() {
-    const selectedIds = Array.from(deleteSelection);
-
-    if (!selectedIds.length) {
-        setMessage("adminMessage", "Please select at least one file to delete.", "error");
-        return;
-    }
-
-    const selectedRows = reportRows.filter(row =>
-        selectedIds.includes(String(row.id))
-    );
-
-    const fileText = selectedRows
-        .slice(0, 8)
-        .map(row => `• NSP ${row.serial_number} — ${row.file_name}`)
-        .join("\n");
-
-    const moreText = selectedRows.length > 8
-        ? `\n• ...and ${selectedRows.length - 8} more`
-        : "";
-
-    const confirmed = confirm(
-        `WARNING: This will permanently delete ${selectedRows.length} selected file(s).\n\n` +
-        `Both the database record and Storage image will be deleted.\n\n` +
-        `The following selected files will be deleted:\n\n` +
-        fileText + moreText +
-        `\n\nFiles you deselected will NOT be deleted.\n\nContinue?`
-    );
-
-    if (!confirmed) return;
-
-    setMessage("adminMessage", "Deleting selected files. Please wait...", "info");
-
-    const { data, error } = await supabaseClient.functions.invoke(
-        DELETE_FUNCTION,
-        { body: { photo_ids: selectedIds.map(Number).filter(Number.isFinite) } }
-    );
-
-    if (error) {
-        console.error(error);
-        setMessage("adminMessage", "Delete failed: " + error.message, "error");
-        return;
-    }
-
-    if (!data || !data.success) {
-        setMessage("adminMessage", data?.message || "Delete failed.", "error");
-        return;
-    }
-
-    deleteSelection.clear();
-
-    setMessage(
-        "adminMessage",
-        `${data.deletedCount} file(s) deleted successfully. Current NSP count: ${data.remainingCount}.`,
-        "success"
-    );
-
-    await loadReport();
-}
-
-function openImageModal(url) {
-    if (!url) return;
-    document.getElementById("modalImage").src = url;
-    document.getElementById("imageModal").classList.remove("hidden");
-}
-
-function closeImageModal(event) {
-    if (!event || event.target.id === "imageModal") {
-        document.getElementById("imageModal").classList.add("hidden");
-        document.getElementById("modalImage").src = "";
-    }
-}
-
-function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-function escapeAttribute(value) {
-    return escapeHtml(value);
-}
-
-function escapeJs(value) {
-    return String(value ?? "")
-        .replaceAll("\\", "\\\\")
-        .replaceAll("'", "\\'")
-        .replaceAll("\n", "\\n")
-        .replaceAll("\r", "\\r");
-}
-
-async function checkSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-
-    if (session) {
-        await openApplication();
-    } else {
-        showLogin();
-    }
-}
-
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
-    if (event === "SIGNED_OUT") {
-        document.getElementById("app").classList.add("hidden");
-        showLogin();
-    }
-});
-
+function openImageModal(url){if(!url)return;document.getElementById("modalImage").src=url;document.getElementById("imageModal").classList.remove("hidden")}
+function closeImageModal(event){if(!event||event.target.id==="imageModal"){document.getElementById("imageModal").classList.add("hidden");document.getElementById("modalImage").src=""}}
+function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function escapeAttribute(v){return escapeHtml(v)}
+function escapeJs(v){return String(v??"").replaceAll("\\","\\\\").replaceAll("'","\\'").replaceAll("\n","\\n").replaceAll("\r","\\r")}
+
+async function checkSession(){const {data:{session}}=await supabaseClient.auth.getSession();if(session)await openApplication();else showLogin()}
+supabaseClient.auth.onAuthStateChange(async(event)=>{if(event==="SIGNED_OUT"){document.getElementById("app").classList.add("hidden");showLogin()}});
 checkSession();
 </script>
 </body>
