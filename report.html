@@ -834,71 +834,142 @@ async function loadUsers() {
 
 async function addUser() {
 
-    const email =
-        document
-            .getElementById("newEmail")
-            .value
-            .trim()
-            .toLowerCase();
+  const email =
+    document.getElementById("newEmail").value.trim();
 
-    const role =
-        document
-            .getElementById("newRole")
-            .value;
+  const role =
+    document.getElementById("newRole").value;
 
-    const message =
-        document
-            .getElementById("adminMessage");
+  const message =
+    document.getElementById("adminMessage");
 
 
-    message.innerText = "";
+  // ---------------------------------------------------------
+  // Validate email
+  // ---------------------------------------------------------
+
+  if (!email) {
+    message.textContent =
+      "Please enter an email address.";
+    return;
+  }
 
 
-    if (!email) {
+  // ---------------------------------------------------------
+  // Show progress
+  // ---------------------------------------------------------
 
-        message.innerText =
-            "Enter email address.";
-
-        return;
-    }
-
-
-    /*
-       ADD EMAIL TO ACCESS LIST
-    */
-
-    const { error } =
-        await supabaseClient
-            .from("report_users")
-            .insert({
-                email: email,
-                role: role,
-                active: true
-            });
+  message.textContent =
+    "Checking login session...";
 
 
-    if (error) {
+  // ---------------------------------------------------------
+  // Check current Supabase session
+  // ---------------------------------------------------------
 
-        message.innerText =
-            error.message;
-
-        return;
-    }
-
-
-    message.innerText =
-        "Email added successfully. Now create/invite this user in Supabase Authentication.";
+  const {
+    data: { session },
+    error: sessionError
+  } =
+    await supabaseClient.auth.getSession();
 
 
-    document
-        .getElementById("newEmail")
-        .value = "";
+  if (
+    sessionError ||
+    !session
+  ) {
+
+    message.textContent =
+      "Your session has expired. Please login again.";
+
+    return;
+  }
 
 
-    loadUsers();
+  // ---------------------------------------------------------
+  // Send request to Edge Function
+  // ---------------------------------------------------------
+
+  message.textContent =
+    "Sending invitation email...";
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.functions.invoke(
+      "admin-invite-user",
+      {
+        body: {
+          email: email,
+          role: role
+        }
+      }
+    );
+
+
+  // ---------------------------------------------------------
+  // Edge Function error
+  // ---------------------------------------------------------
+
+  if (error) {
+
+    console.error(
+      "admin-invite-user error:",
+      error
+    );
+
+    message.textContent =
+      error.message ||
+      "Unable to send invitation.";
+
+    return;
+  }
+
+
+  // ---------------------------------------------------------
+  // Function returned failure
+  // ---------------------------------------------------------
+
+  if (
+    !data ||
+    data.success !== true
+  ) {
+
+    console.error(
+      "Invitation response:",
+      data
+    );
+
+    message.textContent =
+      data?.message ||
+      "Unable to send invitation.";
+
+    return;
+  }
+
+
+  // ---------------------------------------------------------
+  // SUCCESS
+  // ---------------------------------------------------------
+
+  message.textContent =
+    "User added successfully and invitation email sent.";
+
+  document.getElementById(
+    "newEmail"
+  ).value = "";
+
+  document.getElementById(
+    "newRole"
+  ).value = "report";
+
+
+  // Refresh user list
+  await loadUsers();
 
 }
-
 
 /* ================= ACTIVE / INACTIVE ================= */
 
