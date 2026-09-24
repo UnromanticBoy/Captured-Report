@@ -650,30 +650,26 @@ function showLogin() {
 async function sendReset() {
 
     const email =
-        document
-            .getElementById("resetEmail")
-            .value
-            .trim()
-            .toLowerCase();
+        document.getElementById("resetEmail").value.trim();
 
     const message =
         document.getElementById("resetMessage");
 
-    message.innerText = "";
-
 
     if (!email) {
 
-        message.innerText =
-            "Enter your email.";
+        message.textContent =
+            "Please enter your email address.";
 
         return;
     }
 
 
-    /* ==========================================
-       CHECK EMAIL IN REPORT ACCESS LIST
-       ========================================== */
+    message.textContent =
+        "Checking email...";
+
+
+    // Check whether email is allowed
 
     const {
         data: allowed,
@@ -689,8 +685,13 @@ async function sendReset() {
 
     if (allowedError) {
 
-        message.innerText =
-            allowedError.message;
+        console.error(
+            "Access check error:",
+            allowedError
+        );
+
+        message.textContent =
+            "Unable to verify the email. Please try again.";
 
         return;
     }
@@ -698,44 +699,46 @@ async function sendReset() {
 
     if (!allowed) {
 
-        message.innerText =
-            "This email is not registered for report access.";
+        message.textContent =
+            "This email does not have active report access.";
 
         return;
     }
 
 
-    /* ==========================================
-       SEND PASSWORD RESET EMAIL
-       ========================================== */
+    message.textContent =
+        "Sending password reset email...";
+
+
+    // Send reset email
 
     const {
-        error: resetError
+        error
     } =
-        await supabaseClient.auth
-            .resetPasswordForEmail(
-                email,
-                {
-                    redirectTo:
-                        window.location.origin +
-                        window.location.pathname
-                }
-            );
+        await supabaseClient.auth.resetPasswordForEmail(
+            email,
+            {
+                redirectTo:
+                    window.location.origin +
+                    "/Captured-Report/reset-password.html"
+            }
+        );
 
 
-    if (resetError) {
+    if (error) {
 
-        message.innerText =
-            resetError.message;
+        console.error(error);
+
+        message.textContent =
+            error.message;
 
         return;
     }
 
 
-    message.innerText =
-        "Password reset email has been sent.";
+    message.textContent =
+        "Password reset email sent. Please check your email.";
 }
-
 /* ================= LOAD USERS ================= */
 
 async function loadUsers() {
