@@ -261,15 +261,54 @@ if(m)return `${m[3]}-${m[2]}-${m[1]}`;
 return row.created_at?String(row.created_at).slice(0,10):"";
 }
 function getSearchText(row){return [row.serial_number,row.file_name,row.address,row.latitude,row.longitude,row.batch_id,row.date_time].filter(v=>v!==null&&v!==undefined).join(" ").toLowerCase()}
-function rowMatchesFilters(row,prefix=""){
-const search=document.getElementById(prefix+"Search").value.trim().toLowerCase();
-const from=document.getElementById(prefix+"FromDate").value,to=document.getElementById(prefix+"ToDate").value,address=document.getElementById(prefix+"Address").value.trim().toLowerCase();
-if(search&&!getSearchText(row).includes(search))return false;
-const d=getRowDate(row);if(from&&d<from)return false;if(to&&d>to)return false;
-if(address&&!String(row.address||"").toLowerCase().includes(address))return false;
-return true;
-}
-function renderReport(){
+function rowMatchesFilters(row, prefix = "") {
+    let searchId, fromId, toId, addressId;
+
+    if (prefix === "delete") {
+        searchId = "deleteSearch";
+        fromId = "deleteFromDate";
+        toId = "deleteToDate";
+        addressId = "deleteAddress";
+    } else {
+        searchId = "searchBox";
+        fromId = "fromDate";
+        toId = "toDate";
+        addressId = "addressFilter";
+    }
+
+    const searchEl = document.getElementById(searchId);
+    const fromEl = document.getElementById(fromId);
+    const toEl = document.getElementById(toId);
+    const addressEl = document.getElementById(addressId);
+
+    const search = searchEl ? searchEl.value.trim().toLowerCase() : "";
+    const from = fromEl ? fromEl.value : "";
+    const to = toEl ? toEl.value : "";
+    const address = addressEl ? addressEl.value.trim().toLowerCase() : "";
+
+    if (search && !getSearchText(row).includes(search)) {
+        return false;
+    }
+
+    const d = getRowDate(row);
+
+    if (from && d < from) {
+        return false;
+    }
+
+    if (to && d > to) {
+        return false;
+    }
+
+    if (
+        address &&
+        !String(row.address || "").toLowerCase().includes(address)
+    ) {
+        return false;
+    }
+
+    return true;
+}function renderReport(){
 const body=document.getElementById("reportTableBody");
 const filtered=reportRows.filter(r=>rowMatchesFilters(r,""));
 if(!filtered.length){body.innerHTML=`<tr><td colspan="9" class="empty-state">No records found.</td></tr>`;return}
