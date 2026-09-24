@@ -9,7 +9,7 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f6f9;color:#222}
 button,input,select{font:inherit}
-.hidden{display:none!important}
+.hidden{display:none!important}.auth-loading #loginPage,.auth-loading #resetPage,.auth-loading #app{display:none!important}
 .login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#eef4ff,#f8fafc)}
 .login-card{width:100%;max-width:420px;background:#fff;border-radius:16px;padding:30px;box-shadow:0 12px 35px rgba(0,0,0,.1)}
 .login-card h1{margin:0 0 8px}.login-card p{color:#666;margin:0 0 22px}
@@ -66,7 +66,7 @@ tr:hover td{background:#fbfcfe}.thumb{width:90px;height:70px;object-fit:cover;bo
 }
 </style>
 </head>
-<body>
+<body class="auth-loading">
 
 <div id="loginPage" class="login-page">
 <div class="login-card">
@@ -114,13 +114,13 @@ tr:hover td{background:#fbfcfe}.thumb{width:90px;height:70px;object-fit:cover;bo
 <div><label class="muted" style="font-size:12px;font-weight:700">From Date</label><input id="fromDate" type="date" onchange="renderReport()"></div>
 <div><label class="muted" style="font-size:12px;font-weight:700">To Date</label><input id="toDate" type="date" onchange="renderReport()"></div>
 <div><label class="muted" style="font-size:12px;font-weight:700">Address</label><input id="addressFilter" placeholder="Search address..." oninput="renderReport()"></div>
-<button class="btn btn-secondary" onclick="clearReportFilters()">Clear</button>
+<button class="btn btn-primary" onclick="searchReport()">Search</button><button class="btn btn-secondary" onclick="clearReportFilters()">Clear</button>
 </div>
 <div id="reportMessage" class="hidden"></div>
-<div class="table-wrap" style="margin-top:15px">
+<div id="reportResults" class="hidden"><div class="table-wrap" style="margin-top:15px">
 <table><thead><tr><th>NSP</th><th>Date</th><th>Time</th><th>Address</th><th>Latitude</th><th>Longitude</th><th>Batch</th><th>Image</th><th>Action</th></tr></thead>
 <tbody id="reportTableBody"></tbody></table>
-</div>
+</div></div>
 </section>
 
 <section id="deletePanel" class="card admin-action-card hidden">
@@ -207,7 +207,7 @@ startInactivityTimer();await loadReport();
 
 async function logout(){
 stopInactivityTimer();await supabaseClient.auth.signOut();
-document.getElementById("app").classList.add("hidden");document.getElementById("deletePanel").classList.add("hidden");document.getElementById("userPanel").classList.add("hidden");showLogin();
+document.getElementById("app").classList.add("hidden");document.getElementById("deletePanel").classList.add("hidden");document.getElementById("userPanel").classList.add("hidden");document.getElementById("reportCard").classList.remove("hidden");document.getElementById("loginMessage").classList.add("hidden");document.getElementById("loginPassword").value="";document.getElementById("loginEmail").value="";showLogin();
 }
 function startInactivityTimer(){stopInactivityTimer();inactivityTimer=setTimeout(async()=>{alert("You have been logged out due to 5 minutes of inactivity.");await logout()},5*60*1000)}
 function stopInactivityTimer(){if(inactivityTimer){clearTimeout(inactivityTimer);inactivityTimer=null}}
@@ -227,19 +227,18 @@ setMessage("resetMessage","Password reset email sent. Please check your inbox.",
 }
 
 async function loadReport(){
-setMessage("reportMessage","Loading report...","info");
+setMessage("reportMessage","Loading summary...","info");
 const {data:sessionData}=await supabaseClient.auth.getSession(),session=sessionData?.session;
 if(!session){showLogin();return}
-const {data,error}=await supabaseClient.functions.invoke(REPORT_FUNCTION,{body:{}});
+const {data,error}=await supabaseClient.functions.invoke(REPORT_FUNCTION,{body:{mode:"summary"}});
 if(error){console.error(error);setMessage("reportMessage","Unable to load report. "+error.message,"error");return}
 if(!data||!data.success){setMessage("reportMessage",data?.message||"Unable to load report.","error");return}
-reportRows=Array.isArray(data.rows)?data.rows:[];isAdmin=data.isAdmin===true;
+reportRows=[];isAdmin=data.isAdmin===true;
 updateKpis(data);
 document.getElementById("adminActions").classList.toggle("hidden",!isAdmin);
 document.getElementById("todayKpi").classList.toggle("hidden",isAdmin);
 document.getElementById("nspKpi").classList.toggle("hidden",isAdmin);
 if(isAdmin){
-// Admin starts on the normal report too. Only the Total Photos KPI is shown.
 document.getElementById("kpiSection").classList.add("admin-kpis");
 document.getElementById("reportCard").classList.remove("hidden");
 document.getElementById("deletePanel").classList.add("hidden");
@@ -248,7 +247,34 @@ document.getElementById("userPanel").classList.add("hidden");
 document.getElementById("kpiSection").classList.remove("admin-kpis");
 document.getElementById("reportCard").classList.remove("hidden");
 }
-renderReport();renderDeleteList();setMessage("reportMessage","","info");
+document.getElementById("reportResults").classList.add("hidden");
+document.getElementById("reportTableBody").innerHTML="";
+setMessage("reportMessage","Enter filters and click Search to view photos.","info");
+}
+
+async function searchReport(){
+setMessage("reportMessage","Searching photos...","info");
+const {data:sessionData}=await supabaseClient.auth.getSession(),session=sessionData?.session;
+if(!session){showLogin();return}
+const body={
+mode:"search",
+search:document.getElementById("searchBox").value.trim(),
+fromDate:document.getElementById("fromDate").value,
+toDate:document.getElementById("toDate").value,
+address:document.getElementById("addressFilter").value.trim()
+};
+if(!body.search&&!body.fromDate&&!body.toDate&&!body.address){
+setMessage("reportMessage","Please enter at least one search/filter value.","error");
+document.getElementById("reportResults").classList.add("hidden");
+return;
+}
+const {data,error}=await supabaseClient.functions.invoke(REPORT_FUNCTION,{body});
+if(error){console.error(error);setMessage("reportMessage","Search failed. "+error.message,"error");return}
+if(!data||!data.success){setMessage("reportMessage",data?.message||"Search failed.","error");return}
+reportRows=Array.isArray(data.rows)?data.rows:[];
+renderReport();
+document.getElementById("reportResults").classList.remove("hidden");
+setMessage("reportMessage",`${reportRows.length} matching photo(s) found.`,reportRows.length?"success":"info");
 }
 
 function updateKpis(data){
@@ -278,7 +304,7 @@ return true;
 }
 function renderReport(){
 const body=document.getElementById("reportTableBody");
-const filtered=reportRows.filter(r=>rowMatchesFilters(r,""));
+const filtered=reportRows;
 if(!filtered.length){body.innerHTML=`<tr><td colspan="9" class="empty-state">No records found.</td></tr>`;return}
 body.innerHTML=filtered.map(row=>`<tr>
 <td class="nowrap">${escapeHtml(row.serial_number)}</td><td class="nowrap">${escapeHtml(getDisplayDate(row))}</td><td class="nowrap">${escapeHtml(getDisplayTime(row))}</td>
@@ -289,14 +315,22 @@ body.innerHTML=filtered.map(row=>`<tr>
 }
 function getDisplayDate(row){const m=String(row.date_time||"").match(/^(\d{2}\/\d{2}\/\d{4})/);return m?m[1]:getRowDate(row)}
 function getDisplayTime(row){const m=String(row.date_time||"").match(/(\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM))/i);return m?m[1]:""}
-function clearReportFilters(){["searchBox","fromDate","toDate","addressFilter"].forEach(id=>document.getElementById(id).value="");renderReport()}
+function clearReportFilters(){["searchBox","fromDate","toDate","addressFilter"].forEach(id=>document.getElementById(id).value="");reportRows=[];document.getElementById("reportResults").classList.add("hidden");document.getElementById("reportTableBody").innerHTML="";setMessage("reportMessage","Enter filters and click Search to view photos.","info")}
 
-function openDeletePanel(){
+async function openDeletePanel(){
 if(!isAdmin)return;
 document.getElementById("reportCard").classList.add("hidden");
 document.getElementById("userPanel").classList.add("hidden");
 document.getElementById("deletePanel").classList.remove("hidden");
-clearDeleteFilters();renderDeleteList();window.scrollTo({top:0,behavior:"smooth"});
+clearDeleteFilters();
+setMessage("adminMessage","Loading photo list...","info");
+const {data,error}=await supabaseClient.functions.invoke(REPORT_FUNCTION,{body:{mode:"admin-list"}});
+if(error){setMessage("adminMessage","Unable to load photo list: "+error.message,"error");return}
+if(!data?.success){setMessage("adminMessage",data?.message||"Unable to load photo list.","error");return}
+reportRows=Array.isArray(data.rows)?data.rows:[];
+renderDeleteList();
+setMessage("adminMessage",data.limited?"Showing the first 1000 files. Use filters to narrow the list.":"Photo list loaded.","info");
+window.scrollTo({top:0,behavior:"smooth"});
 }
 function openUserPanel(){
 if(!isAdmin)return;
@@ -308,7 +342,7 @@ loadUsers();window.scrollTo({top:0,behavior:"smooth"});
 function backToAdminHome(){
 if(!isAdmin)return;
 document.getElementById("deletePanel").classList.add("hidden");document.getElementById("userPanel").classList.add("hidden");
-document.getElementById("reportCard").classList.add("hidden");window.scrollTo({top:0,behavior:"smooth"});
+document.getElementById("reportCard").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"});
 }
 function renderDeleteList(){
 const list=document.getElementById("deleteList");
@@ -342,7 +376,7 @@ if(error){console.error(error);setMessage("adminMessage","Delete failed: "+error
 if(!data?.success){setMessage("adminMessage",data?.message||"Delete failed.","error");return}
 deleteSelection.clear();
 await loadReport();
-if(isAdmin){document.getElementById("reportCard").classList.add("hidden");document.getElementById("deletePanel").classList.remove("hidden");renderDeleteList()}
+if(isAdmin){await openDeletePanel()}
 setMessage("adminMessage",`${data.deletedCount} file(s) deleted successfully. Remaining NSP count: ${data.remainingCount}.`,"success");
 }
 
@@ -394,8 +428,22 @@ function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("
 function escapeAttribute(v){return escapeHtml(v)}
 function escapeJs(v){return String(v??"").replaceAll("\\","\\\\").replaceAll("'","\\'").replaceAll("\n","\\n").replaceAll("\r","\\r")}
 
-async function checkSession(){const {data:{session}}=await supabaseClient.auth.getSession();if(session)await openApplication();else showLogin()}
-supabaseClient.auth.onAuthStateChange(async(event)=>{if(event==="SIGNED_OUT"){document.getElementById("app").classList.add("hidden");showLogin()}});
+async function checkSession(){
+try{
+const {data:{session}}=await supabaseClient.auth.getSession();
+if(session)await openApplication();else showLogin();
+}finally{document.body.classList.remove("auth-loading")}
+}
+supabaseClient.auth.onAuthStateChange(async(event)=>{
+if(event==="SIGNED_OUT"){
+document.getElementById("app").classList.add("hidden");
+document.getElementById("deletePanel").classList.add("hidden");
+document.getElementById("userPanel").classList.add("hidden");
+document.getElementById("loginMessage").classList.add("hidden");
+document.getElementById("loginPassword").value="";
+showLogin();
+}
+});
 checkSession();
 </script>
 </body>
