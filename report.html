@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Report Login</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* LOGIN */
+
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-box {
+    width: 380px;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.12);
+}
+
+.login-box h2 {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+input,
+select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 7px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+button {
+    border: none;
+    padding: 11px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.login-btn {
+    width: 100%;
+    background: #2563eb;
+    color: white;
+}
+
+.login-btn:hover {
+    background: #1d4ed8;
+}
+
+.forgot-btn {
+    width: 100%;
+    margin-top: 10px;
+    background: transparent;
+    color: #2563eb;
+}
+
+.message {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* APP */
+
+#app {
+    min-height: 100vh;
+}
+
+.topbar {
+    background: #1e293b;
+    color: white;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar button {
+    background: #ef4444;
+    color: white;
+}
+
+.container {
+    padding: 25px;
+}
+
+/* REPORT */
+
+.report-box {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+
+/* ADMIN */
+
+.admin-box {
+    margin-top: 25px;
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+}
+
+.admin-box h2 {
+    margin-top: 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th,
+td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background: #f1f5f9;
+}
+
+.active {
+    color: green;
+    font-weight: bold;
+}
+
+.inactive {
+    color: red;
+    font-weight: bold;
+}
+
+.admin-actions button {
+    margin-right: 5px;
+}
+
+.btn-green {
+    background: #16a34a;
+    color: white;
+}
+
+.btn-red {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-gray {
+    background: #64748b;
+    color: white;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ================= LOGIN ================= -->
+
+<div id="loginPage" class="login-container">
+
+    <div class="login-box">
+
+        <h2>Captured Images Report</h2>
+
+        <label>Email</label>
+
+        <input
+            type="email"
+            id="loginEmail"
+            placeholder="Enter email">
+
+        <label>Password</label>
+
+        <input
+            type="password"
+            id="loginPassword"
+            placeholder="Enter password">
+
+        <button
+            class="login-btn"
+            onclick="login()">
+            Login
+        </button>
+
+        <button
+            class="forgot-btn"
+            onclick="showReset()">
+            Forgot Password?
+        </button>
+
+        <div
+            id="loginMessage"
+            class="message">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= RESET PASSWORD ================= -->
+
+<div id="resetPage" class="login-container hidden">
+
+    <div class="login-box">
+
+        <h2>Reset Password</h2>
+
+        <label>Email</label>
+
+        <input
+            type="email"
+            id="resetEmail"
+            placeholder="Enter registered email">
+
+        <button
+            class="login-btn"
+            onclick="sendReset()">
+            Send Reset Email
+        </button>
+
+        <button
+            class="forgot-btn"
+            onclick="showLogin()">
+            Back to Login
+        </button>
+
+        <div
+            id="resetMessage"
+            class="message">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ================= APPLICATION ================= -->
+
+<div id="app" class="hidden">
+
+    <div class="topbar">
+
+        <div>
+            <strong>My Report</strong>
+        </div>
+
+        <div>
+
+            <span id="userEmail"></span>
+
+            <button onclick="logout()">
+                Logout
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="container">
+
+        <!-- REPORT -->
+
+        <div class="report-box">
+
+            <h2>Report</h2>
+
+            <!-- =================================================
+                 PASTE YOUR EXISTING REPORT HTML HERE
+                 ================================================= -->
+
+            <div id="reportContent">
+
+                <h3>My Report</h3>
+
+                <p>
+                    Your existing report will be placed here.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- ADMIN PANEL -->
+
+        <div
+            id="adminPanel"
+            class="admin-box hidden">
+
+            <h2>Admin Panel</h2>
+
+            <h3>Add New User</h3>
+
+            <input
+                type="email"
+                id="newEmail"
+                placeholder="Enter email address">
+
+            <select id="newRole">
+
+                <option value="report">
+                    Report Access
+                </option>
+
+                <option value="admin">
+                    Admin Access
+                </option>
+
+            </select>
+
+            <button
+                class="btn-green"
+                onclick="addUser()">
+                Add User
+            </button>
+
+            <div
+                id="adminMessage"
+                class="message">
+            </div>
+
+
+            <h3>Registered Users</h3>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Email</th>
+
+                        <th>Role</th>
+
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="userTable">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* ==========================================================
+   STEP 1
+   PUT YOUR SUPABASE DETAILS HERE
+   ========================================================== */
+
+const SUPABASE_URL =
+    "https://zgowfgfuaglpmoigfktx.supabase.co";
+
+const SUPABASE_ANON_KEY =
+    "sb_publishable_fz31GlOgQRS9nhiCjN0XnA_0g4K7H_S";
+
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
+
+
+let currentUser = null;
+let currentProfile = null;
+
+
+/* ================= LOGIN ================= */
+
+async function login() {
+
+    const email =
+        document
+            .getElementById("loginEmail")
+            .value
+            .trim()
+            .toLowerCase();
+
+    const password =
+        document
+            .getElementById("loginPassword")
+            .value;
+
+    const message =
+        document.getElementById("loginMessage");
+
+    message.innerText = "";
+
+    if (!email || !password) {
+
+        message.innerText =
+            "Enter email and password.";
+
+        return;
+    }
+
+
+    /* ==========================================
+       CHECK WHETHER EMAIL IS ALLOWED
+       ========================================== */
+
+    const {
+        data: allowed,
+        error: allowedError
+    } =
+        await supabaseClient.rpc(
+            "is_report_email_allowed",
+            {
+                p_email: email
+            }
+        );
+
+
+    if (allowedError) {
+
+        message.innerText =
+            allowedError.message;
+
+        return;
+    }
+
+
+    if (!allowed) {
+
+        message.innerText =
+            "This email is not permitted to access the report.";
+
+        return;
+    }
+
+
+    /* ==========================================
+       LOGIN TO SUPABASE AUTH
+       ========================================== */
+
+    const {
+        data,
+        error
+    } =
+        await supabaseClient.auth
+            .signInWithPassword({
+                email: email,
+                password: password
+            });
+
+
+    if (error) {
+
+        message.innerText =
+            error.message;
+
+        return;
+    }
+
+
+    /* ==========================================
+       GET USER PROFILE / ROLE
+       ========================================== */
+
+    const {
+        data: accessUser,
+        error: profileError
+    } =
+        await supabaseClient
+            .from("report_users")
+            .select("*")
+            .eq("email", email)
+            .maybeSingle();
+
+
+    if (profileError || !accessUser) {
+
+        await supabaseClient.auth.signOut();
+
+        message.innerText =
+            "Unable to verify your report access.";
+
+        return;
+    }
+
+
+    if (!accessUser.active) {
+
+        await supabaseClient.auth.signOut();
+
+        message.innerText =
+            "This account is inactive.";
+
+        return;
+    }
+
+
+    currentUser = data.user;
+
+    currentProfile = accessUser;
+
+
+    /* ==========================================
+       OPEN APPLICATION
+       ========================================== */
+
+    openApplication();
+
+}
+
+/* ================= OPEN APPLICATION ================= */
+
+function openApplication() {
+
+    document
+        .getElementById("loginPage")
+        .classList.add("hidden");
+
+    document
+        .getElementById("resetPage")
+        .classList.add("hidden");
+
+    document
+        .getElementById("app")
+        .classList.remove("hidden");
+
+
+    document
+        .getElementById("userEmail")
+        .innerText =
+            currentUser.email;
+
+
+    /*
+       ONLY ADMIN SEES ADMIN PANEL
+    */
+
+    if (currentProfile.role === "admin") {
+
+        document
+            .getElementById("adminPanel")
+            .classList.remove("hidden");
+
+        loadUsers();
+
+    } else {
+
+        document
+            .getElementById("adminPanel")
+            .classList.add("hidden");
+
+    }
+
+}
+
+
+/* ================= LOGOUT ================= */
+
+async function logout() {
+
+    await supabaseClient.auth.signOut();
+
+    currentUser = null;
+    currentProfile = null;
+
+    document
+        .getElementById("app")
+        .classList.add("hidden");
+
+    document
+        .getElementById("loginPage")
+        .classList.remove("hidden");
+
+}
+
+
+/* ================= RESET PAGE ================= */
+
+function showReset() {
+
+    document
+        .getElementById("loginPage")
+        .classList.add("hidden");
+
+    document
+        .getElementById("resetPage")
+        .classList.remove("hidden");
+
+}
+
+
+function showLogin() {
+
+    document
+        .getElementById("resetPage")
+        .classList.add("hidden");
+
+    document
+        .getElementById("loginPage")
+        .classList.remove("hidden");
+
+}
+
+
+/* ================= PASSWORD RESET ================= */
+
+async function sendReset() {
+
+    const email =
+        document
+            .getElementById("resetEmail")
+            .value
+            .trim()
+            .toLowerCase();
+
+    const message =
+        document.getElementById("resetMessage");
+
+    message.innerText = "";
+
+
+    if (!email) {
+
+        message.innerText =
+            "Enter your email.";
+
+        return;
+    }
+
+
+    /* ==========================================
+       CHECK EMAIL IN REPORT ACCESS LIST
+       ========================================== */
+
+    const {
+        data: allowed,
+        error: allowedError
+    } =
+        await supabaseClient.rpc(
+            "is_report_email_allowed",
+            {
+                p_email: email
+            }
+        );
+
+
+    if (allowedError) {
+
+        message.innerText =
+            allowedError.message;
+
+        return;
+    }
+
+
+    if (!allowed) {
+
+        message.innerText =
+            "This email is not registered for report access.";
+
+        return;
+    }
+
+
+    /* ==========================================
+       SEND PASSWORD RESET EMAIL
+       ========================================== */
+
+    const {
+        error: resetError
+    } =
+        await supabaseClient.auth
+            .resetPasswordForEmail(
+                email,
+                {
+                    redirectTo:
+                        window.location.origin +
+                        window.location.pathname
+                }
+            );
+
+
+    if (resetError) {
+
+        message.innerText =
+            resetError.message;
+
+        return;
+    }
+
+
+    message.innerText =
+        "Password reset email has been sent.";
+}
+
+/* ================= LOAD USERS ================= */
+
+async function loadUsers() {
+
+    const { data, error } =
+        await supabaseClient
+            .from("report_users")
+            .select("*")
+            .order("created_at", {
+                ascending: false
+            });
+
+
+    if (error) {
+
+        document.getElementById("adminMessage")
+            .innerText = error.message;
+
+        return;
+    }
+
+
+    const table =
+        document.getElementById("userTable");
+
+    table.innerHTML = "";
+
+
+    data.forEach(user => {
+
+        const row =
+            document.createElement("tr");
+
+
+        row.innerHTML = `
+
+            <td>${escapeHtml(user.email)}</td>
+
+            <td>${user.role}</td>
+
+            <td>
+
+                ${
+                    user.active
+
+                    ? '<span class="active">ACTIVE</span>'
+
+                    : '<span class="inactive">INACTIVE</span>'
+                }
+
+            </td>
+
+            <td class="admin-actions">
+
+                ${
+                    user.active
+
+                    ?
+
+                    `<button
+                        class="btn-gray"
+                        onclick="changeStatus('${user.id}', false)">
+                        Make Inactive
+                    </button>`
+
+                    :
+
+                    `<button
+                        class="btn-green"
+                        onclick="changeStatus('${user.id}', true)">
+                        Make Active
+                    </button>`
+                }
+
+                <button
+                    class="btn-red"
+                    onclick="deleteUser('${user.id}')">
+                    Delete
+                </button>
+
+            </td>
+        `;
+
+
+        table.appendChild(row);
+
+    });
+
+}
+
+
+/* ================= ADD USER ================= */
+
+async function addUser() {
+
+    const email =
+        document
+            .getElementById("newEmail")
+            .value
+            .trim()
+            .toLowerCase();
+
+    const role =
+        document
+            .getElementById("newRole")
+            .value;
+
+    const message =
+        document
+            .getElementById("adminMessage");
+
+
+    message.innerText = "";
+
+
+    if (!email) {
+
+        message.innerText =
+            "Enter email address.";
+
+        return;
+    }
+
+
+    /*
+       ADD EMAIL TO ACCESS LIST
+    */
+
+    const { error } =
+        await supabaseClient
+            .from("report_users")
+            .insert({
+                email: email,
+                role: role,
+                active: true
+            });
+
+
+    if (error) {
+
+        message.innerText =
+            error.message;
+
+        return;
+    }
+
+
+    message.innerText =
+        "Email added successfully. Now create/invite this user in Supabase Authentication.";
+
+
+    document
+        .getElementById("newEmail")
+        .value = "";
+
+
+    loadUsers();
+
+}
+
+
+/* ================= ACTIVE / INACTIVE ================= */
+
+async function changeStatus(id, status) {
+
+    const { error } =
+        await supabaseClient
+            .from("report_users")
+            .update({
+                active: status
+            })
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    loadUsers();
+
+}
+
+
+/* ================= DELETE ================= */
+
+async function deleteUser(id) {
+
+    if (!confirm(
+        "Delete this user's report access?"
+    )) {
+
+        return;
+    }
+
+
+    const { error } =
+        await supabaseClient
+            .from("report_users")
+            .delete()
+            .eq("id", id);
+
+
+    if (error) {
+
+        alert(error.message);
+
+        return;
+    }
+
+
+    loadUsers();
+
+}
+
+
+/* ================= SECURITY ================= */
+
+function escapeHtml(text) {
+
+    return text
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
+
+
+/* ================= CHECK EXISTING SESSION ================= */
+
+async function checkSession() {
+
+    const {
+        data: {
+            session
+        }
+    } =
+        await supabaseClient
+            .auth
+            .getSession();
+
+
+    if (!session) {
+
+        return;
+    }
+
+
+    const email =
+        session.user.email;
+
+
+    const {
+        data: profile
+    } =
+        await supabaseClient
+            .from("report_users")
+            .select("*")
+            .ilike("email", email)
+            .maybeSingle();
+
+
+    if (!profile || !profile.active) {
+
+        await supabaseClient
+            .auth
+            .signOut();
+
+        return;
+    }
+
+
+    currentUser = session.user;
+    currentProfile = profile;
+
+    openApplication();
+
+}
+
+
+checkSession();
+
+</script>
+
+</body>
+</html>
