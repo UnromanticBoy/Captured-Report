@@ -239,8 +239,9 @@ document.getElementById("adminActions").classList.toggle("hidden",!isAdmin);
 document.getElementById("todayKpi").classList.toggle("hidden",isAdmin);
 document.getElementById("nspKpi").classList.toggle("hidden",isAdmin);
 if(isAdmin){
+// Admin starts on the normal report too. Only the Total Photos KPI is shown.
 document.getElementById("kpiSection").classList.add("admin-kpis");
-document.getElementById("reportCard").classList.add("hidden");
+document.getElementById("reportCard").classList.remove("hidden");
 document.getElementById("deletePanel").classList.add("hidden");
 document.getElementById("userPanel").classList.add("hidden");
 }else{
@@ -261,54 +262,21 @@ if(m)return `${m[3]}-${m[2]}-${m[1]}`;
 return row.created_at?String(row.created_at).slice(0,10):"";
 }
 function getSearchText(row){return [row.serial_number,row.file_name,row.address,row.latitude,row.longitude,row.batch_id,row.date_time].filter(v=>v!==null&&v!==undefined).join(" ").toLowerCase()}
-function rowMatchesFilters(row, prefix = "") {
-    let searchId, fromId, toId, addressId;
-
-    if (prefix === "delete") {
-        searchId = "deleteSearch";
-        fromId = "deleteFromDate";
-        toId = "deleteToDate";
-        addressId = "deleteAddress";
-    } else {
-        searchId = "searchBox";
-        fromId = "fromDate";
-        toId = "toDate";
-        addressId = "addressFilter";
-    }
-
-    const searchEl = document.getElementById(searchId);
-    const fromEl = document.getElementById(fromId);
-    const toEl = document.getElementById(toId);
-    const addressEl = document.getElementById(addressId);
-
-    const search = searchEl ? searchEl.value.trim().toLowerCase() : "";
-    const from = fromEl ? fromEl.value : "";
-    const to = toEl ? toEl.value : "";
-    const address = addressEl ? addressEl.value.trim().toLowerCase() : "";
-
-    if (search && !getSearchText(row).includes(search)) {
-        return false;
-    }
-
-    const d = getRowDate(row);
-
-    if (from && d < from) {
-        return false;
-    }
-
-    if (to && d > to) {
-        return false;
-    }
-
-    if (
-        address &&
-        !String(row.address || "").toLowerCase().includes(address)
-    ) {
-        return false;
-    }
-
-    return true;
-}function renderReport(){
+function rowMatchesFilters(row,prefix=""){
+const ids=prefix==="delete"
+?{search:"deleteSearch",from:"deleteFromDate",to:"deleteToDate",address:"deleteAddress"}
+:{search:"searchBox",from:"fromDate",to:"toDate",address:"addressFilter"};
+const searchEl=document.getElementById(ids.search),fromEl=document.getElementById(ids.from),toEl=document.getElementById(ids.to),addressEl=document.getElementById(ids.address);
+const search=searchEl?searchEl.value.trim().toLowerCase():"";
+const from=fromEl?fromEl.value:"";
+const to=toEl?toEl.value:"";
+const address=addressEl?addressEl.value.trim().toLowerCase():"";
+if(search&&!getSearchText(row).includes(search))return false;
+const d=getRowDate(row);if(from&&d<from)return false;if(to&&d>to)return false;
+if(address&&!String(row.address||"").toLowerCase().includes(address))return false;
+return true;
+}
+function renderReport(){
 const body=document.getElementById("reportTableBody");
 const filtered=reportRows.filter(r=>rowMatchesFilters(r,""));
 if(!filtered.length){body.innerHTML=`<tr><td colspan="9" class="empty-state">No records found.</td></tr>`;return}
@@ -316,7 +284,7 @@ body.innerHTML=filtered.map(row=>`<tr>
 <td class="nowrap">${escapeHtml(row.serial_number)}</td><td class="nowrap">${escapeHtml(getDisplayDate(row))}</td><td class="nowrap">${escapeHtml(getDisplayTime(row))}</td>
 <td style="min-width:260px">${escapeHtml(row.address)}</td><td class="nowrap">${escapeHtml(row.latitude)}</td><td class="nowrap">${escapeHtml(row.longitude)}</td><td class="nowrap">${escapeHtml(row.batch_id)}</td>
 <td>${row.signed_url?`<img class="thumb" src="${escapeAttribute(row.signed_url)}" alt="Photo" onclick="openImageModal('${escapeJs(row.signed_url)}')">`:`<span class="muted">No image</span>`}</td>
-<td class="nowrap">${row.signed_url?`<button class="btn btn-secondary btn-small" onclick="downloadPhoto('${escapeJs(row.signed_url)}','${escapeJs(row.file_name || `NSP_${row.serial_number || row.id}.jpg`)}')">Download</button>`:`-`}</td>
+<td class="nowrap">${row.signed_url?`<a class="download-link" href="${escapeAttribute(row.signed_url)}" download target="_blank" rel="noopener">Download</a>`:`-`}</td>
 </tr>`).join("");
 }
 function getDisplayDate(row){const m=String(row.date_time||"").match(/^(\d{2}\/\d{2}\/\d{4})/);return m?m[1]:getRowDate(row)}
@@ -420,17 +388,6 @@ if(!data?.success){setMessage("userAddMessage",data?.message||"Unable to delete 
 setMessage("userAddMessage","User access deleted successfully.","success");await loadUsers();
 }
 
-async function downloadPhoto(url,fileName){
-if(!url)return;
-try{
-const response=await fetch(url);
-if(!response.ok)throw new Error("Unable to download the image.");
-const blob=await response.blob();
-const objectUrl=URL.createObjectURL(blob);
-const a=document.createElement("a");a.href=objectUrl;a.download=fileName||"photo.jpg";document.body.appendChild(a);a.click();a.remove();
-setTimeout(()=>URL.revokeObjectURL(objectUrl),1000);
-}catch(error){console.error(error);window.open(url,"_blank","noopener");}
-}
 function openImageModal(url){if(!url)return;document.getElementById("modalImage").src=url;document.getElementById("imageModal").classList.remove("hidden")}
 function closeImageModal(event){if(!event||event.target.id==="imageModal"){document.getElementById("imageModal").classList.add("hidden");document.getElementById("modalImage").src=""}}
 function escapeHtml(v){return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
