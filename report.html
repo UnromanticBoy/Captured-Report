@@ -300,10 +300,22 @@ document.getElementById("reportResults").classList.remove("hidden");
 setMessage("reportMessage",`${reportRows.length} matching photo(s) found.`,reportRows.length?"success":"info");
 }
 
-function updateKpis(data){
-document.getElementById("totalPhotos").textContent=Number(data.totalCount??reportRows.length);
-document.getElementById("todayPhotos").textContent=Number(data.todayCount??0);
-document.getElementById("currentNsp").textContent=Number(data.currentNspCount??reportRows.length);
+function updateKpis(data) {
+    const totalPhotos = document.getElementById('totalPhotos');
+    const todayPhotos = document.getElementById('todayPhotos');
+    const currentNsp = document.getElementById('currentNsp');
+
+    if (totalPhotos) {
+        totalPhotos.textContent = data.totalCount ?? 0;
+    }
+
+    if (todayPhotos) {
+        todayPhotos.textContent = data.todayCount ?? 0;
+    }
+
+    if (currentNsp) {
+        currentNsp.textContent = data.currentNspCount ?? 0;
+    }
 }
 function getRowDate(row){
 const text=String(row.date_time||""),m=text.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
