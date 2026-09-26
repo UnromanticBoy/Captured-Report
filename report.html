@@ -259,7 +259,6 @@ reportRows=[];isAdmin=data.isAdmin===true;
 updateKpis(data);
 document.getElementById("adminActions").classList.toggle("hidden",!isAdmin);
 document.getElementById("todayKpi").classList.toggle("hidden",isAdmin);
-document.getElementById("nspKpi").classList.toggle("hidden",isAdmin);
 if(isAdmin){
 document.getElementById("kpiSection").classList.add("admin-kpis");
 document.getElementById("reportCard").classList.remove("hidden");
