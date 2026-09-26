@@ -21,7 +21,7 @@ button,input,select{font:inherit}
 .btn-secondary{background:#e9edf3;color:#222}.btn-danger{background:#d92d20;color:#fff}.btn-danger:hover{background:#b42318}
 .btn-success{background:#078d57;color:#fff}.btn-small{padding:7px 10px;font-size:12px}
 .message{margin-top:12px;padding:10px 12px;border-radius:8px;font-size:13px}
-.message.error{background:#fff0f0;color:#b42318}.message.success{background:#ecfdf3;color:#027a48}.message.info{background:#eff8ff;color:#175cd3}
+.message.error{background:#fff0f0;color:#b42318}.message.success{background:#ecfdf3;color:#027a48}.message.info{background:#eff8ff;color:#175cd3}.storage-alert{margin-bottom:18px;border:1px solid #f5b800;background:#fff8df;color:#6b4e00;border-radius:10px;padding:11px 13px;font-size:13px}.storage-alert.danger{border-color:#f04438;background:#fff1f0;color:#b42318}
 .topbar{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #e2e7ee;padding:13px 20px;display:flex;justify-content:space-between;align-items:center;gap:15px}
 .topbar-title{font-size:21px;font-weight:800}.topbar-right{display:flex;align-items:center;gap:12px;font-size:13px}
 .container{max-width:1500px;margin:0 auto;padding:20px}
@@ -70,7 +70,7 @@ tr:hover td{background:#fbfcfe}.thumb{width:90px;height:70px;object-fit:cover;bo
 
 <div id="loginPage" class="login-page">
 <div class="login-card">
-<h1>NSPIRA REPORT</h1><p>By Electrical F&A</p>
+<h1>NSPIRA REPORT</h1><p>Secure report access</p>
 <div class="field"><label>Email</label><input id="loginEmail" type="email" autocomplete="username" placeholder="Enter email"></div>
 <div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter password"></div>
 <button class="btn btn-primary" style="width:100%" onclick="login()">Login</button>
@@ -96,6 +96,7 @@ tr:hover td{background:#fbfcfe}.thumb{width:90px;height:70px;object-fit:cover;bo
 </div>
 
 <main class="container">
+<div id="storageAlert" class="storage-alert hidden"></div>
 <section id="kpiSection" class="kpis">
 <div class="kpi"><div class="kpi-label">Total Photos</div><div id="totalPhotos" class="kpi-value">0</div></div>
 <div id="todayKpi" class="kpi"><div class="kpi-label">Today</div><div id="todayPhotos" class="kpi-value">0</div></div>
@@ -125,7 +126,7 @@ tr:hover td{background:#fbfcfe}.thumb{width:90px;height:70px;object-fit:cover;bo
 
 <section id="deletePanel" class="card admin-action-card hidden">
 <div class="panel-actions">
-<div><h2 style="margin:0">NSP Reset / Delete Photos</h2><div class="muted" style="font-size:12px;margin-top:4px">Choose filters first. Only checked files will be permanently deleted.</div></div>
+<div><h2 style="margin:0">NSP Reset / Delete Photos</h2><div class="muted" style="font-size:12px;margin-top:4px">Choose filters first. Only checked files will be soft-deleted. The image is removed immediately; the table record is retained for 6 months.</div></div>
 <div class="right"><button class="btn btn-secondary btn-small" onclick="backToAdminHome()">Back</button></div>
 </div>
 <div class="filters">
@@ -139,12 +140,12 @@ tr:hover td{background:#fbfcfe}.thumb{width:90px;height:70px;object-fit:cover;bo
 <div class="admin-toolbar"><button class="btn btn-secondary btn-small" onclick="selectAllVisibleForDelete()">Select All Visible</button><button class="btn btn-secondary btn-small" onclick="deselectAllVisibleForDelete()">Deselect Visible</button></div>
 <span id="selectionSummary" class="selection-summary">Selected: 0</span>
 </div>
-<div class="danger-note"><strong>Permanent deletion:</strong> selected database records and corresponding files from the private <strong>photo-stamping</strong> Storage bucket will be deleted. Unchecked files will remain untouched.</div>
+<div class="danger-note"><strong>Soft delete:</strong> selected image files are removed from the private <strong>photo-stamping</strong> Storage bucket, while the database record remains for audit/history. The retained record is automatically purged after 6 months. Unchecked files remain untouched.</div>
 <div id="adminMessage" class="hidden"></div>
 <div class="delete-list" id="deleteList"></div>
 <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px">
 <button class="btn btn-secondary" onclick="backToAdminHome()">Cancel</button>
-<button class="btn btn-danger" onclick="confirmDeleteSelected()">Delete Selected &amp; Reset NSP</button>
+<button class="btn btn-danger" onclick="confirmDeleteSelected()">Soft Delete Selected Photos</button>
 </div>
 </section>
 
@@ -186,6 +187,28 @@ const USER_FUNCTION="admin-user-management";
 let reportRows=[],deleteSelection=new Set(),inactivityTimer=null,isAdmin=false;
 
 function setMessage(id,text,type="info"){const el=document.getElementById(id);if(!el)return;el.className="message "+type;el.textContent=text||"";if(!text)el.classList.add("hidden")}
+
+async function loadStorageHealth(){
+if(!isAdmin)return;
+const box=document.getElementById("storageAlert");
+if(!box)return;
+try{
+const {data,error}=await supabaseClient.rpc("get_report_storage_health");
+if(error||!data){box.classList.add("hidden");return}
+const h=Array.isArray(data)?data[0]:data;
+const pct=Number(h.used_percent||0);
+const due=Number(h.deleted_due_soon||0);
+const next=h.next_purge_date?new Date(h.next_purge_date):null;
+let parts=[];
+if(pct>=80)parts.push(`Storage is ${pct.toFixed(1)}% used. Please remove old photos to free space.`);
+if(due>0){
+const when=next&&!Number.isNaN(next.getTime())?` Next automatic metadata purge: ${next.toLocaleDateString("en-IN")}.`:"";
+parts.push(`${due} soft-deleted record(s) are within the 30-day purge reminder window.${when}`);
+}
+if(!parts.length){box.classList.add("hidden");return}
+box.textContent=parts.join(" ");box.classList.remove("hidden");box.classList.toggle("danger",pct>=90);
+}catch(e){console.warn("Storage health check failed",e);box.classList.add("hidden")}
+}
 function showLogin(){document.getElementById("resetPage").classList.add("hidden");document.getElementById("loginPage").classList.remove("hidden")}
 function showReset(){document.getElementById("loginPage").classList.add("hidden");document.getElementById("resetPage").classList.remove("hidden");document.getElementById("resetMessage").classList.add("hidden")}
 
@@ -250,6 +273,7 @@ document.getElementById("reportCard").classList.remove("hidden");
 document.getElementById("reportResults").classList.add("hidden");
 document.getElementById("reportTableBody").innerHTML="";
 setMessage("reportMessage","Enter filters and click Search to view photos.","info");
+await loadStorageHealth();
 }
 
 async function searchReport(){
@@ -369,7 +393,7 @@ if(!ids.length){setMessage("adminMessage","Please select at least one file to de
 const rows=reportRows.filter(r=>ids.includes(String(r.id)));
 const fileText=rows.slice(0,10).map(r=>`• NSP ${r.serial_number} — ${r.file_name}`).join("\n");
 const more=rows.length>10?`\n• ...and ${rows.length-10} more`:"";
-if(!confirm(`WARNING: ${rows.length} selected file(s) will be permanently deleted.\n\n${fileText}${more}\n\nUnchecked files will NOT be deleted.\n\nContinue?`))return;
+if(!confirm(`WARNING: ${rows.length} selected photo(s) will be soft-deleted. The image files will be removed immediately, but the table records will be retained for 6 months.\n\n${fileText}${more}\n\nUnchecked files will NOT be deleted.\n\nContinue?`))return;
 setMessage("adminMessage","Deleting selected files. Please wait...","info");
 const {data,error}=await supabaseClient.functions.invoke(DELETE_FUNCTION,{body:{photo_ids:ids.map(Number).filter(Number.isFinite)}});
 if(error){console.error(error);setMessage("adminMessage","Delete failed: "+error.message,"error");return}
@@ -377,7 +401,8 @@ if(!data?.success){setMessage("adminMessage",data?.message||"Delete failed.","er
 deleteSelection.clear();
 await loadReport();
 if(isAdmin){await openDeletePanel()}
-setMessage("adminMessage",`${data.deletedCount} file(s) deleted successfully. Remaining NSP count: ${data.remainingCount}.`,"success");
+setMessage("adminMessage",`${data.deletedCount} photo(s) soft-deleted. NSP numbering continues forward; deleted numbers will never be reused.`,"success");
+await loadStorageHealth();
 }
 
 async function addUser(){
