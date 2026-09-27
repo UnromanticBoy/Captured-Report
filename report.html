@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Caputured Image Report</title>
+<title>Captured Image Report</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
@@ -103,7 +103,7 @@ tr:hover td{background:#fbfcfe}.thumb{width:90px;height:70px;object-fit:cover;bo
 </section>
 
 <section id="adminActions" class="admin-actions hidden">
-<button class="btn btn-danger" onclick="openDeletePanel()">NSP Reset / Delete</button>
+<button class="btn btn-danger" onclick="openDeletePanel()">Image Delete</button>
 <button class="btn btn-primary" onclick="openUserPanel()">Add User</button>
 </section>
 
@@ -125,7 +125,7 @@ tr:hover td{background:#fbfcfe}.thumb{width:90px;height:70px;object-fit:cover;bo
 
 <section id="deletePanel" class="card admin-action-card hidden">
 <div class="panel-actions">
-<div><h2 style="margin:0">NSP Reset / Delete Photos</h2><div class="muted" style="font-size:12px;margin-top:4px">Choose filters first. Only checked files will be soft-deleted. The image is removed immediately; the table record is retained for 6 months.</div></div>
+<div><h2 style="margin:0">Delete Photos</h2><div class="muted" style="font-size:12px;margin-top:4px">Choose filters first. Only checked files will be soft-deleted. The image is removed immediately; the table record is retained for 6 months.</div></div>
 <div class="right"><button class="btn btn-secondary btn-small" onclick="backToAdminHome()">Back</button></div>
 </div>
 <div class="filters">
